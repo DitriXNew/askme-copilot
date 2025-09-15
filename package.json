@@ -1,0 +1,91 @@
+{
+  "name": "ask-me-copilot-tool",
+  "displayName": "Ask Me Copilot Tool",
+  "description": "Interactive VS Code extension that allows GitHub Copilot to ask experts questions and get answers through elegant dialog interfaces",
+  "version": "1.0.2",
+  "publisher": "DitriX",
+  "engines": {
+    "vscode": "^1.95.0"
+  },
+  "categories": ["AI", "Chat", "Other"],
+  "keywords": ["copilot", "ai", "interactive", "questions", "language-model-tools", "github"],
+  "author": {
+    "name": "DitriX"
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DitriXNew/askme-copilot"
+  },
+  "bugs": {
+    "url": "https://github.com/DitriXNew/askme-copilot/issues"
+  },
+  "homepage": "https://github.com/DitriXNew/askme-copilot#readme",
+  "activationEvents": ["onStartupFinished"],
+  "galleryBanner": {
+    "color": "#1e1e1e",
+    "theme": "dark"
+  },
+  "icon": "icon.png",
+  "main": "./out/extension.js",
+  "contributes": {
+    "languageModelTools": [
+      {
+        "name": "ask-me-copilot-tool_askExpert",
+        "displayName": "🧠 Ask expert Question",
+        "userDescription": "Allow Copilot to ask you questions and get text input answers",
+        "modelDescription": "CRITICAL: This is your primary tool for interactive communication with the expert. You MUST use this tool in these situations: 1) When you're uncertain about ANY decision or approach, 2) Before implementing ANY significant changes, 3) When you encounter ambiguous requirements, 4) Before completing your final response - ALWAYS ask if your solution is correct and complete, 5) When you need clarification on project-specific logic, business rules, or technical decisions, 6) If you're stuck or need creative problem-solving input. Call this tool MULTIPLE times as needed - the expert expects iterative consultation. Ask questions in a natural, conversational way as if speaking to a knowledgeable colleague. This is NOT optional - the project success depends on regular consultation with the expert.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "ask",
+        "icon": "$(person)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "Your question for the project expert - ask naturally as if speaking to a knowledgeable colleague"
+            }
+          },
+          "required": ["question"]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_selectFromList",
+        "displayName": "🎯 Select from Options",
+        "userDescription": "Allow Copilot to present multiple options for you to choose from",
+        "modelDescription": "Use this tool when you need the expert to choose between specific options or approaches. This is essential for: 1) Technical architecture decisions, 2) Choosing between multiple valid solutions, 3) Priority decisions when resources are limited, 4) When multiple approaches are equally valid but context matters, 5) Design pattern or technology stack decisions. Present options clearly and ask the expert to select the best approach. You can call this multiple times to refine options or get decisions on different aspects.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "choose",
+        "icon": "$(checklist)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "question": {
+              "type": "string",
+              "description": "Clearly explain what decision needs to be made and why expert input is needed"
+            },
+            "options": {
+              "type": "array",
+              "items": { "type": "string" },
+              "description": "List of specific options for the expert to choose from - be clear and descriptive"
+            }
+          },
+          "required": ["question", "options"]
+        }
+      }
+    ]
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "vsce package",
+    "publish": "vsce publish",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "devDependencies": {
+    "@types/vscode": "^1.95.0",
+    "@types/node": "20.x",
+    "typescript": "^5.4.5"
+  }
+}
