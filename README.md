@@ -4,6 +4,9 @@
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/DitriX.ask-me-copilot-tool?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/DitriX.ask-me-copilot-tool?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool)
 [![GitHub Stars](https://img.shields.io/github/stars/DitriXNew/askme-copilot?style=flat-square)](https://github.com/DitriXNew/askme-copilot)
+[![CI/CD Pipeline](https://github.com/DitriXNew/askme-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/DitriXNew/askme-copilot/actions/workflows/ci.yml)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![VS Code Version](https://img.shields.io/badge/vscode-%3E%3D1.95.0-blue)](https://code.visualstudio.com/)
 
 > **Transform GitHub Copilot from a servant into a collaborative partner**
 

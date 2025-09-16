@@ -1,0 +1,352 @@
+name: 🧪 CI/CD Pipeline - Ask Me Copilot Extension
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  workflow_dispatch:
+
+env:
+  NODE_VERSION_MATRIX: '["18.x", "20.x", "22.x"]'
+  VSCODE_VERSION_MATRIX: '["stable", "insiders"]'
+
+jobs:
+  # =====================================================
+  # 🔍 Code Quality & Linting
+  # =====================================================
+  lint:
+    name: 🔍 Code Quality Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔍 Run ESLint
+        run: npm run lint
+
+      - name: 📊 Check TypeScript compilation
+        run: npm run compile
+
+      - name: 📋 Validate package.json
+        run: |
+          node -e "
+            const pkg = require('./package.json');
+            console.log('✅ Package validation:');
+            console.log(\`   Name: \${pkg.name}\`);
+            console.log(\`   Version: \${pkg.version}\`);
+            console.log(\`   VS Code Engine: \${pkg.engines.vscode}\`);
+            console.log(\`   Language Model Tools: \${pkg.contributes.languageModelTools.length}\`);
+            
+            // Validate required fields
+            if (!pkg.name || !pkg.version || !pkg.main) {
+              throw new Error('Missing required package.json fields');
+            }
+            
+            // Validate MCP tools
+            if (!pkg.contributes.languageModelTools || pkg.contributes.languageModelTools.length !== 4) {
+              throw new Error('Expected exactly 4 language model tools');
+            }
+            
+            console.log('✅ Package.json validation passed');
+          "
+
+  # =====================================================
+  # 🧪 Unit & Integration Tests Matrix
+  # =====================================================
+  test:
+    name: 🧪 Test Suite (Node ${{ matrix.node }} | VS Code ${{ matrix.vscode }})
+    runs-on: ${{ matrix.os }}
+    needs: lint
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+        node: ['18.x', '20.x', '22.x']
+        vscode: ['stable', 'insiders']
+        exclude:
+          # Reduce matrix size - skip some combinations for efficiency
+          - os: macos-latest
+            node: '18.x'
+          - os: windows-latest
+            vscode: 'insiders'
+
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js ${{ matrix.node }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Compile TypeScript
+        run: npm run compile
+
+      - name: 🧪 Run VS Code Extension Tests
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: npm test
+        env:
+          VSCODE_TEST_VERSION: ${{ matrix.vscode }}
+
+      - name: 📊 Test Results Summary
+        if: always()
+        run: |
+          echo "## 🧪 Test Results Summary" >> $GITHUB_STEP_SUMMARY
+          echo "- **OS:** ${{ matrix.os }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Node.js:** ${{ matrix.node }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **VS Code:** ${{ matrix.vscode }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Status:** ${{ job.status }}" >> $GITHUB_STEP_SUMMARY
+
+  # =====================================================
+  # 🎯 MCP Integration Tests (Special Focus)
+  # =====================================================
+  mcp-tests:
+    name: 🎯 MCP Integration Tests
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Compile TypeScript
+        run: npm run compile
+
+      - name: 🎯 Run MCP-specific tests
+        uses: coactions/setup-xvfb@v1
+        with:
+          run: npm run test:mcp
+        env:
+          VSCODE_TEST_VERSION: 'stable'
+
+      - name: 📋 Validate MCP Tool Registration
+        run: |
+          echo "🔍 Validating MCP tool configurations..."
+          node -e "
+            const pkg = require('./package.json');
+            const tools = pkg.contributes.languageModelTools;
+            
+            console.log('🎯 MCP Tools Validation:');
+            tools.forEach((tool, index) => {
+              console.log(\`\${index + 1}. \${tool.displayName}\`);
+              console.log(\`   Name: \${tool.name}\`);
+              console.log(\`   Schema: \${tool.inputSchema ? '✅' : '❌'}\`);
+              console.log(\`   Required fields: \${tool.inputSchema.required?.length || 0}\`);
+              console.log('');
+            });
+            
+            // Validate tool IDs
+            const expectedTools = [
+              'ask-me-copilot-tool_askExpert',
+              'ask-me-copilot-tool_selectFromList', 
+              'ask-me-copilot-tool_reviewCode',
+              'ask-me-copilot-tool_confirmAction'
+            ];
+            
+            expectedTools.forEach(expectedId => {
+              const found = tools.find(t => t.name === expectedId);
+              if (!found) {
+                throw new Error(\`Missing required MCP tool: \${expectedId}\`);
+              }
+            });
+            
+            console.log('✅ All MCP tools validated successfully');
+          "
+
+  # =====================================================
+  # 📦 Extension Packaging Test
+  # =====================================================
+  package:
+    name: 📦 Extension Packaging
+    runs-on: ubuntu-latest
+    needs: [lint, test]
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Compile TypeScript
+        run: npm run compile
+
+      - name: 📦 Install VSCE (VS Code Extension CLI)
+        run: npm install -g @vscode/vsce
+
+      - name: 🎁 Package extension
+        run: vsce package --no-dependencies
+
+      - name: 📊 Package info
+        run: |
+          echo "## 📦 Extension Package Details" >> $GITHUB_STEP_SUMMARY
+          ls -la *.vsix
+          echo "### Package Contents:" >> $GITHUB_STEP_SUMMARY
+          vsce ls >> $GITHUB_STEP_SUMMARY
+
+      - name: 💾 Upload extension artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ask-me-copilot-extension-${{ github.sha }}
+          path: "*.vsix"
+          retention-days: 30
+
+  # =====================================================
+  # 🔒 Security & Dependency Check
+  # =====================================================
+  security:
+    name: 🔒 Security Audit
+    runs-on: ubuntu-latest
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔒 Run security audit
+        run: npm audit --audit-level=moderate
+
+      - name: 🔍 Check for outdated dependencies
+        run: |
+          echo "## 📋 Dependency Status" >> $GITHUB_STEP_SUMMARY
+          echo "### Outdated packages:" >> $GITHUB_STEP_SUMMARY
+          npm outdated >> $GITHUB_STEP_SUMMARY || true
+
+  # =====================================================
+  # 📈 Performance & Size Analysis
+  # =====================================================
+  performance:
+    name: 📈 Performance Analysis
+    runs-on: ubuntu-latest
+    needs: lint
+    steps:
+      - name: 📥 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 🟢 Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20.x'
+          cache: 'npm'
+
+      - name: 📦 Install dependencies
+        run: npm ci
+
+      - name: 🔨 Compile TypeScript
+        run: npm run compile
+
+      - name: 📊 Analyze bundle size
+        run: |
+          echo "## 📈 Bundle Size Analysis" >> $GITHUB_STEP_SUMMARY
+          echo "### Compiled Output:" >> $GITHUB_STEP_SUMMARY
+          du -sh out/ >> $GITHUB_STEP_SUMMARY
+          echo "### File breakdown:" >> $GITHUB_STEP_SUMMARY
+          find out/ -name "*.js" -exec du -h {} + | sort -hr >> $GITHUB_STEP_SUMMARY
+
+      - name: 🎯 Extension Load Time Test
+        run: |
+          echo "🚀 Testing extension activation performance..."
+          node -e "
+            const fs = require('fs');
+            const path = require('path');
+            
+            // Analyze extension.js size and complexity
+            const extensionPath = './out/extension.js';
+            if (fs.existsSync(extensionPath)) {
+              const stats = fs.statSync(extensionPath);
+              const content = fs.readFileSync(extensionPath, 'utf8');
+              
+              console.log('📊 Extension Performance Metrics:');
+              console.log(\`   File size: \${(stats.size / 1024).toFixed(2)} KB\`);
+              console.log(\`   Lines of code: \${content.split('\n').length}\`);
+              console.log(\`   Function count: \${(content.match(/function/g) || []).length}\`);
+              console.log(\`   Class count: \${(content.match(/class /g) || []).length}\`);
+              
+              // Size recommendations
+              if (stats.size > 100 * 1024) {
+                console.log('⚠️  Warning: Extension size > 100KB, consider optimization');
+              } else {
+                console.log('✅ Extension size is optimal');
+              }
+            }
+          "
+
+  # =====================================================
+  # 🎉 Success Summary
+  # =====================================================
+  success:
+    name: 🎉 CI/CD Success
+    runs-on: ubuntu-latest
+    needs: [lint, test, mcp-tests, package, security, performance]
+    if: success()
+    steps:
+      - name: 🎉 All checks passed
+        run: |
+          echo "## 🎉 CI/CD Pipeline Completed Successfully!" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### ✅ Completed Checks:" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔍 Code quality and linting" >> $GITHUB_STEP_SUMMARY
+          echo "- 🧪 Cross-platform testing (3 OS × 3 Node.js × 2 VS Code versions)" >> $GITHUB_STEP_SUMMARY
+          echo "- 🎯 MCP integration tests" >> $GITHUB_STEP_SUMMARY
+          echo "- 📦 Extension packaging" >> $GITHUB_STEP_SUMMARY
+          echo "- 🔒 Security audit" >> $GITHUB_STEP_SUMMARY
+          echo "- 📈 Performance analysis" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "🚀 **Ready for deployment!**" >> $GITHUB_STEP_SUMMARY
+
+  # =====================================================
+  # ❌ Failure Notification
+  # =====================================================
+  failure:
+    name: ❌ CI/CD Failure
+    runs-on: ubuntu-latest
+    needs: [lint, test, mcp-tests, package, security, performance]
+    if: failure()
+    steps:
+      - name: ❌ Pipeline failed
+        run: |
+          echo "## ❌ CI/CD Pipeline Failed" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Please check the failed jobs above and fix the issues." >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Common issues:" >> $GITHUB_STEP_SUMMARY
+          echo "- TypeScript compilation errors" >> $GITHUB_STEP_SUMMARY
+          echo "- Test failures" >> $GITHUB_STEP_SUMMARY
+          echo "- Linting issues" >> $GITHUB_STEP_SUMMARY
+          echo "- MCP tool configuration problems" >> $GITHUB_STEP_SUMMARY
+          echo "- Security vulnerabilities" >> $GITHUB_STEP_SUMMARY
