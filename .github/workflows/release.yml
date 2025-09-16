@@ -33,24 +33,22 @@ jobs:
     - name: Package extension
       run: vsce package
       
+    - name: Create and push tag
+      run: |
+        git config --local user.email "DitriXNew@gmail.com"
+        git config --local user.name "DitriX"
+        git tag v${{ steps.get_version.outputs.VERSION }}
+        git push origin v${{ steps.get_version.outputs.VERSION }}
+      
     - name: Create Release
       id: create_release
-      uses: actions/create-release@v1
+      uses: softprops/action-gh-release@v1
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       with:
         tag_name: v${{ steps.get_version.outputs.VERSION }}
-        release_name: Release v${{ steps.get_version.outputs.VERSION }}
+        name: Release v${{ steps.get_version.outputs.VERSION }}
         body: "Automated release for version ${{ steps.get_version.outputs.VERSION }}"
         draft: false
         prerelease: false
-        
-    - name: Upload Extension Package
-      uses: actions/upload-release-asset@v1
-      env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        upload_url: ${{ steps.create_release.outputs.upload_url }}
-        asset_path: ./ask-me-copilot-tool-${{ steps.get_version.outputs.VERSION }}.vsix
-        asset_name: ask-me-copilot-tool-${{ steps.get_version.outputs.VERSION }}.vsix
-        asset_content_type: application/zip
+        files: ./ask-me-copilot-tool-${{ steps.get_version.outputs.VERSION }}.vsix
