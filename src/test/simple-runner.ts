@@ -1,9 +1,9 @@
 /**
- * Простой тестовый раннер для локального тестирования без VS Code
- * Запускает симуляцию работы инструментов
+ * Simple test runner for local testing without VS Code
+ * Runs simulation of the tools
  */
 
-// Простая реализация test framework
+// Simple test framework implementation
 interface TestCase {
     name: string;
     fn: () => void | Promise<void>;
@@ -38,7 +38,7 @@ class SimpleTestRunner {
         let passedTests = 0;
         let failedTests = 0;
         
-        console.log('🚀 Running Ask Me Copilot Extension Tests\\n');
+        console.log('🚀 Running Ask Me Copilot Extension Tests\n');
         
         for (const suite of this.suites) {
             console.log(`📁 ${suite.name}`);
@@ -66,7 +66,7 @@ class SimpleTestRunner {
         if (failedTests > 0) {
             process.exit(1);
         } else {
-            console.log('\\n🎉 All tests passed!');
+            console.log('\n🎉 All tests passed!');
         }
     }
 }

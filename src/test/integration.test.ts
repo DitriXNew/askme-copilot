@@ -5,8 +5,8 @@ declare function suite(name: string, fn: () => void): void;
 declare function test(name: string, fn: () => void): void;
 
 /**
- * Интеграционные тесты для эмуляции реальных вызовов инструментов
- * Эти тесты помогают проверить работу инструментов в условиях, максимально приближенных к реальным
+ * Integration tests for real tool call emulation
+ * These tests help verify tool functionality under conditions close to real usage
  */
 
 interface MockToolCall {
@@ -297,7 +297,7 @@ function authenticateUser(username: string, password: string): boolean {
 });
 
 /**
- * Симулирует вызов инструмента с валидацией входных данных
+ * Simulates tool call with input data validation
  */
 function simulateToolCall(testCase: MockToolCall): { success: boolean; output?: string; error?: string } {
     try {
