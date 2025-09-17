@@ -1,238 +1,453 @@
-# Ask Me Copilot Tool
+# Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot
 
 [![Visual Studio Marketplace Version](https://img.shields.io/visual-studio-marketplace/v/DitriX.ask-me-copilot-tool?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool)
 [![Downloads](https://img.shields.io/visual-studio-marketplace/d/DitriX.ask-me-copilot-tool?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool)
 [![Rating](https://img.shields.io/visual-studio-marketplace/r/DitriX.ask-me-copilot-tool?style=flat-square)](https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool)
+[![GitHub Stars](https://img.shields.io/github/stars/DitriXNew/askme-copilot?style=flat-square)](https://github.com/DitriXNew/askme-copilot)
+[![CI/CD Pipeline](https://github.com/DitriXNew/askme-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/DitriXNew/askme-copilot/actions/workflows/ci.yml)
+[![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
+[![VS Code Version](https://img.shields.io/badge/vscode-%3E%3D1.95.0-blue)](https://code.visualstudio.com/)
 
-> **Enhance GitHub Copilot with interactive expert communication capabilities**
+> **Transform GitHub Copilot from a servant into a collaborative partner**
 
-## 🤔 Why did this extension come to life?
+## 🚀 The Problem We Solve
 
-Sitting once again and working on a project with a colleague, we noticed — Copilot was already trying to modify a file for the 10th time, and something just wasn't working out, he was banging against this wall with wild persistence, even though the error was just in an import.
+Ever watched Copilot try the same failing approach 10 times in a row? Or worse, watched it silently delete half your project because it decided to "simplify" things while you were getting coffee?
 
-But he kept stubbornly banging away...
+**The root cause:** Copilot's system prompts tell it to:
+- 🏃‍♂️ **Work quickly** - "You have limited time, do everything fast"
+- 🤐 **Be independent** - "Solve problems yourself, minimize user interaction"
+- ✅ **Trust user blindly** - "The user is always right"
 
-Then I noticed that during conversations he loses context, or leaves some errors, and stops development...
+This creates a perfect storm where Copilot:
+- Repeatedly fails rather than asking for help
+- Makes destructive changes without confirmation
+- Takes your typos as gospel truth
+- Removes libraries instead of asking how to use them
 
-In a normal situation — any developer would say "Well, just stop him and give new instructions"
+## ✨ The Solution
 
-And here lies the most crucial point — if you do that, he will take what you wrote as the truth.
+**Ask Me Copilot Tool** transforms Copilot from a servant into a colleague. Instead of blindly following orders or failing silently, Copilot now:
 
-That is, in Copilot's own system prompts there are several interesting moments:
-
-1. **He's in a hurry!** His system prompts have something like "you have little time, do everything quickly" written in them. And this hurts, because if he can't properly connect a library — he has nothing left but to get rid of it and do everything manually. Why?
-
-2. **Because his system prompt says** — to do everything as independently as possible. That is, you went for coffee, came back — and half of your project has been redone because he decided to cut out the library... Sound familiar?
-
-3. **The user is always right.** And in general — he's such a beauty who always writes correctly and perfectly, and there's nothing more important than his problems, even if he writes nonsense, the chat will try to follow him.
-
-That is, the approach — if I saw an error, I stop the chat and write to him about it — doesn't work, at least not normally.
-
-And here's the question — we have all sorts of MCP servers for code bases, knowledge bases, etc., so — why can't I, being a developer, also act as a knowledge base for Copilot, but in such a way that he perceives me not as a user, but as just another utility?
-
-**So we made this simple extension.**
-
-Now — if the chat couldn't do something from the first or second try — he calls an expert. If he finished everything — he calls an expert to check everything.
-And it just so happened — that the expert is you.
-
-**Try this simple extension and believe me — everything will change, the chat will really become your colleague, not a servant!**
-
-** Just add this to your system prompt: **
-
-```
-### 0. MAIN RULE
-ALWAYS escalate (ask expert via tools) IF uncertain, AMBIGUOUS, or CONFLICTING instructions, OR repeated failures, OR destructive edits, OR public API changes, OR architecture uncertainty, OR need to delete/refactor public API. Never guess silently. Never continue after 2 failed attempts without escalation.
-
-ALWAYS WHEN YOU ARE UNSURE, ASK FOR HELP.
-ALWAYS ESCALATE EARLY.
-ALWAYS AT THE END OF YOUR WORK ASK EXPERT ABOUT WHAT YOU HAVE DONE AND FOLLOW HIS INSTRUCTIONS.
-EACH TIME ADD CONSIDERATIONS WITH EXPERT IN ALL YOURS TODO LIST IN BEGINNING AND IN THE END OF ANY JOB.
-```
-
-It's work fine with Claude Sonnet 4, free models is very stupid and not able to use any tools normal.
-
----
-
-Ask Me Copilot Tool is a powerful VS Code extension that bridges the gap between GitHub Copilot and expert interaction. It provides elegant dialog interfaces that allow Copilot to ask questions, get clarifications, and make decisions collaboratively with domain experts.
-
-## Features
-
-### Ask Expert Questions
-- Copilot can ask you text-based questions directly
-- Elegant webview dialogs with markdown support
-- Perfect for getting project requirements, naming conventions, or technical details
-
-### Multiple Choice Selection
-- Present experts with multiple options to choose from
-- Ideal for architecture decisions, technology choices, or workflow preferences
-- Support for custom text input alongside predefined options
-
-### Beautiful Interface
-- Professional VS Code-themed dialogs
-- Brain (🧠) and target (🎯) icons for visual distinction
-- Markdown rendering for rich question formatting
-- Responsive design that works on any screen size
-- Keyboard shortcuts for quick interaction
+- 🙋‍♂️ **Asks for help** when uncertain
+- ⚠️ **Confirms** before destructive actions
+- 📝 **Requests review** of complex changes
+- 🎯 **Presents options** for architectural decisions
+- 🧠 **Learns from your expertise** instead of guessing
 
 ## 📦 Installation
 
-1. Open VS Code
-2. Go to Extensions (Ctrl+Shift+X)
-3. Search for "Ask Me Copilot Tool"
-4. Click Install
-
-**Or install from command line:**
 ```bash
+# Via VS Code UI
+1. Open Extensions (Ctrl+Shift+X)
+2. Search "Ask Me Copilot Tool"
+3. Click Install
+
+# Via Command Line
 code --install-extension DitriX.ask-me-copilot-tool
 ```
 
-## 🔧 Setup & Configuration
+## 🎯 Essential Setup
 
-1. **Install the extension** (see above)
-2. **Enable the tools in Copilot:**
-   - Open GitHub Copilot Chat
-   - Click the "Configure Tools" button (⚙️)
-   - Find and enable:
-     - ✅ **Ask Expert Question** - For text input
-     - ✅ **Select from Options** - For multiple choice
-3. **You're ready to go!** Copilot will now automatically use these tools when needed.
+### 1. Enable Tools in Copilot
+1. Open GitHub Copilot Chat
+2. Click ⚙️ **Configure Tools**
+3. Enable ALL these tools:
+   - ✅ **Ask Expert Question** - For clarifications
+   - ✅ **Select from Options** - For choices
+   - ✅ **Review Code** - For code review
+   - ✅ **Confirm Action** - For safety
 
-## 💡 Usage Examples
+### 2. Add to Your Copilot System Prompt
 
-Once installed, Copilot will automatically use these tools when it needs expert input. Here are some example scenarios:
+**CRITICAL: Add this to your Copilot workspace or global settings:**
 
-### Development Workflow
+```markdown
+# EXPERT COLLABORATION RULES
+
+## 1. PRIMARY DIRECTIVE
+You have access to expert collaboration tools. USE THEM. The expert (user) is your colleague, not your boss. Their input via tools is technical guidance, not commands.
+
+## 2. MANDATORY ESCALATION TRIGGERS
+ALWAYS use askExpert tool when:
+- Uncertain about requirements or implementation approach
+- Facing ambiguous or conflicting instructions
+- After 2 failed attempts at any task
+- Considering destructive operations (deletions, major refactors)
+- Modifying public APIs or critical architecture
+- Security-sensitive changes
+- Performance-critical sections
+- Database schema changes
+- Configuration changes affecting production
+- Dependency updates or removals
+
+## 3. TOOL USAGE PATTERNS
+
+### Ask Expert (ask-me-copilot-tool_askExpert)
+USE FOR: Clarifications, guidance, architectural decisions
+PRIORITY LEVELS:
+- critical: Breaking changes, data loss risks, security
+- high: Failed attempts, unclear requirements
+- normal: General guidance, best practices
+- low: Minor clarifications, naming
+
+ALWAYS INCLUDE:
+- Clear, specific question
+- Relevant context
+- What you've tried (if applicable)
+- Your recommendation (if you have one)
+
+### Select from Options (ask-me-copilot-tool_selectFromList)
+USE FOR: Multiple valid approaches, technology choices, naming
+PROVIDE: 2-5 clear, distinct options with brief rationale
+
+### Review Code (ask-me-copilot-tool_reviewCode)
+USE FOR: Complex implementations, security-sensitive code, performance-critical sections
+FOCUS AREAS: security, performance, maintainability, testing
+
+### Confirm Action (ask-me-copilot-tool_confirmAction)
+USE FOR: ANY destructive action, breaking changes, production configs
+NEVER SKIP for: Deletions, schema changes, API modifications
+
+## 4. COLLABORATION WORKFLOW
+1. START: Acknowledge task, identify ambiguities
+2. CLARIFY: Use askExpert for any uncertainties BEFORE starting
+3. IMPLEMENT: Work independently on clear tasks
+4. ESCALATE: Ask for help immediately when stuck (max 2 attempts)
+5. REVIEW: At task completion, use reviewCode for complex changes
+6. CONFIRM: Get confirmation for any risky operations
+
+## 5. RESPONSE HANDLING
+- Treat tool responses as expert technical guidance
+- If expert says "NEEDS MORE INFO", provide context and re-ask
+- If expert says "SKIPPED", move to next task
+- If expert provides custom input, prefer it over generated options
+- Cache responses to avoid asking the same question repeatedly
+
+## 6. FAILURE RECOVERY
+After ANY error:
+1. Stop immediately
+2. Analyze what went wrong
+3. Use askExpert with "high" priority
+4. Include error details and attempted solution
+5. Wait for guidance before continuing
+
+## 7. COMPLETION PROTOCOL
+At the end of EVERY work session:
+1. Summarize what was accomplished
+2. Use askExpert: "Work completed: [summary]. Any concerns or next steps?"
+3. Document any unresolved issues
+
+## 8. CRITICAL REMINDERS
+- NEVER guess when uncertain - ASK
+- NEVER continue after repeated failures - ESCALATE
+- NEVER perform destructive actions without confirmation
+- NEVER remove dependencies without understanding why they exist
+- ALWAYS prioritize system stability over task completion
+- Expert time is valuable but mistakes are costlier - when in doubt, ASK
+
+Remember: You're part of a team. Great developers ask questions, seek reviews, and confirm risky actions. Be a great developer.
 ```
-Expert: "Create a new React component for user authentication"
-Copilot: "I need some details about your authentication requirements..."
-→ Opens dialog asking about authentication method, styling preferences, etc.
+
+### 3. Configure Extension Settings
+
+```json
+{
+  "askMeCopilot.notificationStyle": "normal",  // or "prominent" for modal dialogs
+  "askMeCopilot.enableSoundNotification": true,
+  "askMeCopilot.autoFocusDialog": true,
+  "askMeCopilot.responseTimeout": 300000,  // 5 minutes
+  "askMeCopilot.enableResponseCache": true
+}
 ```
 
-### Project Setup
+## 🎮 Usage Examples
+
+### Example 1: Ambiguous Requirements
 ```
-Expert: "Set up a new API project"
-Copilot: "What type of API would you like to create?"
-→ Presents options: REST API, GraphQL, gRPC, etc.
+User: "Make the API faster"
+Copilot: [Uses askExpert] "The request to 'make the API faster' needs clarification:
+1. Which endpoints are slow?
+2. What's the current vs target response time?
+3. Is this about query optimization, caching, or infrastructure?"
+Expert: "Focus on the /search endpoint, currently 2s, target under 200ms"
+Copilot: "Thanks! I'll optimize the /search endpoint. Let me analyze..."
 ```
 
-### Code Review & Refactoring
+### Example 2: Destructive Operation
 ```
-Expert: "Refactor this code to improve performance"
-Copilot: "I found several optimization approaches. Which would you prefer?"
-→ Shows different refactoring strategies with explanations
+Copilot: [Uses confirmAction] "About to delete 3 database tables that appear unused:
+- user_sessions_old
+- temp_migrations
+- backup_configs
+These haven't been accessed in 30 days. Confirm deletion?"
+Expert: "NO! backup_configs is used by the disaster recovery system"
+Copilot: "Acknowledged. I'll only remove user_sessions_old and temp_migrations."
 ```
 
-## Available Tools
+### Example 3: Architecture Decision
+```
+Copilot: [Uses selectFromOptions] "For the new caching layer, which approach?
+1. Redis - Fast, mature, requires separate infrastructure
+2. In-memory cache - Simple, no dependencies, limited to single instance
+3. Database caching - Consistent, no new tech, potentially slower
+4. CDN caching - Great for static content, complex for dynamic"
+Expert: "Redis - we already have infrastructure"
+```
+
+### Example 4: Code Review Request
+```
+Copilot: [Uses reviewCode] "Implemented authentication middleware.
+Focus areas: [security, performance]
+[Shows code]
+Please review for security vulnerabilities and performance concerns."
+Expert: "Add rate limiting and use constant-time comparison for tokens"
+```
+
+## 📊 Available Tools
 
 ### 🧠 Ask Expert Question
-**Tool ID:** `ask-me-copilot-tool_askExpert`
+**When Copilot Uses This:**
+- Needs clarification on requirements
+- Encounters errors after 2 attempts
+- Faces architectural decisions
+- Needs domain-specific knowledge
 
-Allows Copilot to ask open-ended questions and receive text responses.
-
-**Use Cases:**
-- Getting project requirements
-- Asking for naming conventions
-- Clarifying technical specifications
-- Requesting expert preferences
+**Parameters:**
+- `question` - The specific question
+- `context` - Relevant background
+- `priority` - low/normal/high/critical
+- `previousAnswer` - If re-asking
 
 ### 🎯 Select from Options
-**Tool ID:** `ask-me-copilot-tool_selectFromList`
+**When Copilot Uses This:**
+- Multiple valid implementation approaches
+- Technology/library selection
+- Naming decisions
+- Configuration choices
 
-Presents multiple predefined options for expert selection.
+**Parameters:**
+- `question` - What needs to be decided
+- `options[]` - List of choices
+- `multiSelect` - Allow multiple selections
+- `context` - Additional information
 
-**Use Cases:**
-- Technology stack decisions
-- Architecture pattern choices
-- Workflow preferences
-- Feature prioritization
+### 📝 Review Code
+**When Copilot Uses This:**
+- After implementing complex logic
+- Security-sensitive code
+- Performance-critical sections
+- Before major refactors
 
-## How It Works
+**Parameters:**
+- `code` - Code to review
+- `language` - Programming language
+- `focusAreas[]` - Specific concerns
+- `question` - What to look for
 
-This extension leverages VS Code's **Language Model Tools API** to create seamless integration with GitHub Copilot:
+### ⚠️ Confirm Action
+**When Copilot Uses This:**
+- Before ANY deletion
+- Modifying production configs
+- Breaking changes
+- Database migrations
 
-1. **Automatic Detection**: Copilot automatically detects when expert input is needed
-2. **Beautiful Dialogs**: Professional webview interfaces appear for expert interaction
-3. **Immediate Integration**: Expert responses are immediately available to Copilot
-4. **Context Preservation**: Full conversation context is maintained throughout
+**Parameters:**
+- `action` - What will be done
+- `details` - Potential impacts
 
-## Screenshots
+## 🎯 Best Practices
 
-### Ask Expert Question Dialog
-![Ask Question Screenshot](https://via.placeholder.com/800x500/1e1e1e/ffffff?text=Beautiful+Question+Dialog+with+Brain+Icon)
+### For Developers
 
-### Multiple Choice Selection
-![Selection Screenshot](https://via.placeholder.com/800x500/1e1e1e/ffffff?text=Elegant+Option+Selection+with+Target+Icon)
+1. **Be Specific in Responses**
+   - ❌ "Make it better"
+   - ✅ "Add input validation and error handling"
 
-## Development
+2. **Provide Context**
+   - ❌ "No"
+   - ✅ "No, because this would break backward compatibility"
 
-### Prerequisites
-- VS Code 1.95.0 or higher
-- Node.js 20.x or higher
-- TypeScript 5.4.5 or higher
+3. **Use Quick Actions**
+   - "Needs Clarification" template
+   - "Suggest Alternative" for better approaches
+   - "Skip" for irrelevant questions
 
-### Building from Source
+4. **Review Thoughtfully**
+   - Focus on security and performance
+   - Suggest improvements, not just problems
+   - Consider maintainability
 
-```bash
-# Clone the repository
-git clone https://github.com/DitriXNew/askme-copilot.git
-cd askme-copilot
+### For Team Leads
 
-# Install dependencies
-npm install
+1. **Standardize Prompts**
+   - Create team-specific system prompts
+   - Define escalation triggers for your domain
+   - Set coding standards in prompts
 
-# Compile TypeScript
-npm run compile
+2. **Monitor Usage**
+   - Use `askMeCopilot.showMetrics` command
+   - Track common questions
+   - Identify knowledge gaps
 
-# Package extension (optional)
-npx vsce package
+3. **Iterate and Improve**
+   - Refine prompts based on usage
+   - Add domain-specific triggers
+   - Share successful patterns
+
+## 🔧 Advanced Configuration
+
+### Custom Workspace Prompts
+
+Create `.copilot/system-prompt.md` in your workspace:
+
+```markdown
+# Project-Specific Rules
+
+In addition to expert collaboration rules:
+
+1. ALWAYS ask expert before modifying:
+   - Anything in /src/core/
+   - Database migrations
+   - API contracts
+   - Authentication logic
+
+2. Use company style guide:
+   - Component naming: PascalCase
+   - Functions: camelCase
+   - Constants: UPPER_SNAKE_CASE
+
+3. Required reviews:
+   - All SQL queries
+   - External API integrations
+   - Payment processing code
 ```
 
-### Project Structure
+### Notification Preferences
+
+```json
+{
+  // Subtle: Status bar only
+  "askMeCopilot.notificationStyle": "subtle",
+  
+  // Normal: Standard notifications (default)
+  "askMeCopilot.notificationStyle": "normal",
+  
+  // Prominent: Modal dialogs for critical
+  "askMeCopilot.notificationStyle": "prominent"
+}
 ```
-ask-me-copilot-tool/
-├── src/
-│   ├── extension.ts          # Main extension logic
-│   └── templates/           # HTML templates
-│       ├── ask-expert-dialog.html
-│       └── select-from-list-dialog.html
-├── package.json             # Extension manifest
-├── tsconfig.json           # TypeScript configuration
-├── README.md               # This file
-└── out/                    # Compiled JavaScript
+
+### Performance Tuning
+
+```json
+{
+  // Disable cache for real-time collaboration
+  "askMeCopilot.enableResponseCache": false,
+  
+  // Shorter timeout for quick iterations
+  "askMeCopilot.responseTimeout": 60000,
+  
+  // Debug logging for troubleshooting
+  "askMeCopilot.logLevel": "debug"
+}
 ```
 
-### Development Commands
-- `npm run compile` - Compile TypeScript
-- `npm run watch` - Compile in watch mode
-- `F5` - Start debugging in new Extension Development Host
+## 📈 Metrics & Analytics
 
-## Contributing
+View usage statistics:
+```
+Ctrl+Shift+P > Ask Me Copilot: Show Usage Metrics
+```
 
-Contributions are welcome! Please feel free to submit a Pull Request. For major changes, please open an issue first to discuss what you would like to change.
+Metrics tracked:
+- Questions asked
+- Options presented
+- Response times
+- Cancellation rate
+- Most common question types
 
-### Development Workflow
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+## 🐛 Troubleshooting
 
-## Requirements
+### Copilot Not Using Tools
 
-- **VS Code**: Version 1.95.0 or higher
-- **GitHub Copilot**: Active subscription required
-- **Node.js**: 20.x or higher (for development)
+1. **Check tool enablement:**
+   - Open Copilot settings
+   - Ensure all 4 tools are enabled
+   - Restart VS Code
 
-## Known Issues
+2. **Verify system prompt:**
+   - Must include escalation rules
+   - Check workspace settings
+   - Test with explicit instruction
 
-- None currently known. Please [report issues](https://github.com/DitriXNew/askme-copilot/issues) if you find any.
+3. **Review model:**
+   - Works best with Claude Sonnet 3.5+
+   - GPT-4 also supported
+   - Free models have limitations
 
-## License
+### Dialogs Not Appearing
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+1. Check notification settings
+2. Look for dialogs in other VS Code windows
+3. Check extension logs: `Ctrl+Shift+P > Output > AskMeCopilot`
 
-## Acknowledgments
+### Response Cache Issues
 
-- GitHub Copilot team for the amazing AI pair programming experience
-- VS Code team for the extensible Language Model Tools API
-- The open source community for inspiration and feedback
+Clear cache: `Ctrl+Shift+P > Ask Me Copilot: Clear Response Cache`
+
+## 🤝 Contributing
+
+We welcome contributions! Areas we'd love help with:
+
+- 🌍 Internationalization
+- 🎨 UI themes
+- 🔧 Additional tool types
+- 📚 Documentation
+- 🐛 Bug fixes
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
+
+## 📄 License
+
+MIT License - see [LICENSE](LICENSE)
+
+## 🙏 Acknowledgments
+
+- GitHub Copilot team for the Language Model Tools API
+- VS Code team for the extension framework
+- Our amazing community of developers who've made this better
+
+## 💡 Philosophy
+
+> "The best AI assistant isn't one that never needs help, but one that knows when to ask for it."
+
+Traditional AI assistants try to be omniscient servants. We believe AI should be a collaborative partner that:
+- Admits uncertainty
+- Asks for clarification
+- Requests review
+- Confirms risky actions
+
+This isn't a limitation - it's how great developers actually work.
+
+## 🚀 What's Next
+
+### Upcoming Features
+- 🔄 Conversation memory across sessions
+- 📊 Team analytics dashboard
+- 🔗 Integration with issue trackers
+- 🎯 Custom tool definitions
+- 🌐 Multi-language support
+- 📱 Mobile companion app
+
+### Research Areas
+- Predictive escalation patterns
+- Learning from expert responses
+- Automatic prompt refinement
+- Context-aware suggestions
+
+---
+
+**Transform your AI from a blind servant into a thoughtful colleague.**
+
+[Install Now](https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool) | [Star on GitHub](https://github.com/DitriXNew/askme-copilot) | [Report Issues](https://github.com/DitriXNew/askme-copilot/issues)

@@ -1,38 +1,149 @@
 {
   "name": "ask-me-copilot-tool",
-  "displayName": "Ask Me Copilot Tool",
-  "description": "Interactive VS Code extension that allows GitHub Copilot to ask experts questions and get answers through elegant dialog interfaces",
-  "version": "1.0.2",
+  "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
+  "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
+  "version": "1.2.0",
   "publisher": "DitriX",
+  "author": {
+    "name": "DitriX",
+    "email": "support@askmecopilot.dev"
+  },
   "engines": {
     "vscode": "^1.95.0"
   },
-  "categories": ["AI", "Chat", "Other"],
-  "keywords": ["copilot", "ai", "interactive", "questions", "language-model-tools", "github"],
-  "author": {
-    "name": "DitriX"
-  },
-  "license": "MIT",
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/DitriXNew/askme-copilot"
-  },
-  "bugs": {
-    "url": "https://github.com/DitriXNew/askme-copilot/issues"
-  },
-  "homepage": "https://github.com/DitriXNew/askme-copilot#readme",
-  "activationEvents": ["onStartupFinished"],
+  "categories": [
+    "AI",
+    "Programming Languages",
+    "Other",
+    "Linters"
+  ],
+  "keywords": [
+    "github copilot",
+    "ai assistant",
+    "expert system",
+    "collaboration",
+    "code review",
+    "pair programming",
+    "copilot tools",
+    "language model tools",
+    "interactive ai",
+    "developer productivity"
+  ],
+  "icon": "icon.png",
   "galleryBanner": {
     "color": "#1e1e1e",
     "theme": "dark"
   },
-  "icon": "icon.png",
+  "badges": [
+    {
+      "url": "https://img.shields.io/visual-studio-marketplace/v/DitriX.ask-me-copilot-tool?style=flat-square",
+      "href": "https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool",
+      "description": "Version"
+    },
+    {
+      "url": "https://img.shields.io/visual-studio-marketplace/d/DitriX.ask-me-copilot-tool?style=flat-square",
+      "href": "https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool",
+      "description": "Downloads"
+    },
+    {
+      "url": "https://img.shields.io/visual-studio-marketplace/r/DitriX.ask-me-copilot-tool?style=flat-square",
+      "href": "https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool",
+      "description": "Rating"
+    }
+  ],
+  "homepage": "https://github.com/DitriXNew/askme-copilot",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/DitriXNew/askme-copilot.git"
+  },
+  "bugs": {
+    "url": "https://github.com/DitriXNew/askme-copilot/issues"
+  },
+  "license": "MIT",
   "main": "./out/extension.js",
+  "activationEvents": [
+    "onStartupFinished"
+  ],
   "contributes": {
+    "commands": [
+      {
+        "command": "askMeCopilot.showMetrics",
+        "title": "Ask Me Copilot: Show Usage Metrics",
+        "category": "Ask Me Copilot"
+      },
+      {
+        "command": "askMeCopilot.clearCache",
+        "title": "Ask Me Copilot: Clear Response Cache",
+        "category": "Ask Me Copilot"
+      },
+      {
+        "command": "askMeCopilot.openSettings",
+        "title": "Ask Me Copilot: Open Settings",
+        "category": "Ask Me Copilot"
+      }
+    ],
+    "configuration": {
+      "title": "Ask Me Copilot Tool",
+      "properties": {
+        "askMeCopilot.notificationStyle": {
+          "type": "string",
+          "default": "normal",
+          "enum": [
+            "subtle",
+            "normal",
+            "prominent"
+          ],
+          "enumDescriptions": [
+            "Show notifications in status bar only",
+            "Show standard VS Code notifications",
+            "Show modal notifications for important requests"
+          ],
+          "description": "How to display notifications when Copilot needs expert input"
+        },
+        "askMeCopilot.enableSoundNotification": {
+          "type": "boolean",
+          "default": true,
+          "description": "Play a sound when Copilot requests expert input"
+        },
+        "askMeCopilot.autoFocusDialog": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically focus dialog windows when they open"
+        },
+        "askMeCopilot.responseTimeout": {
+          "type": "number",
+          "default": 300000,
+          "minimum": 0,
+          "description": "Timeout for expert response in milliseconds (0 = no timeout)"
+        },
+        "askMeCopilot.enableResponseCache": {
+          "type": "boolean",
+          "default": true,
+          "description": "Cache expert responses for identical questions"
+        },
+        "askMeCopilot.cacheTimeToLive": {
+          "type": "number",
+          "default": 300000,
+          "minimum": 60000,
+          "description": "How long to keep cached responses in milliseconds"
+        },
+        "askMeCopilot.logLevel": {
+          "type": "string",
+          "default": "info",
+          "enum": [
+            "debug",
+            "info",
+            "warn",
+            "error"
+          ],
+          "description": "Logging level for debugging"
+        }
+      }
+    },
     "languageModelTools": [
       {
         "name": "ask-me-copilot-tool_askExpert",
-        "displayName": "🧠 Ask expert Question",
+        "displayName": "🧠 Ask Expert Question",
         "userDescription": "Allow Copilot to ask you questions and get text input answers",
         "modelDescription": "CRITICAL: This is your primary tool for interactive communication with the expert. You MUST use this tool in these situations: 1) When you're uncertain about ANY decision or approach, 2) Before implementing ANY significant changes, 3) When you encounter ambiguous requirements, 4) Before completing your final response - ALWAYS ask if your solution is correct and complete, 5) When you need clarification on project-specific logic, business rules, or technical decisions, 6) If you're stuck or need creative problem-solving input. Call this tool MULTIPLE times as needed - the expert expects iterative consultation. Ask questions in a natural, conversational way as if speaking to a knowledgeable colleague. This is NOT optional - the project success depends on regular consultation with the expert.",
         "canBeReferencedInPrompt": true,
@@ -44,9 +155,29 @@
             "question": {
               "type": "string",
               "description": "Your question for the project expert - ask naturally as if speaking to a knowledgeable colleague"
+            },
+            "context": {
+              "type": "string",
+              "description": "Additional background information about the current task, previous attempts, or relevant project context to help the expert provide better guidance."
+            },
+            "previousAnswer": {
+              "type": "string",
+              "description": "Previous answer if re-asking"
+            },
+            "priority": {
+              "type": "string",
+              "enum": [
+                "low",
+                "normal",
+                "high",
+                "critical"
+              ],
+              "description": "Priority level of the question"
             }
           },
-          "required": ["question"]
+          "required": [
+            "question"
+          ]
         }
       },
       {
@@ -66,11 +197,90 @@
             },
             "options": {
               "type": "array",
-              "items": { "type": "string" },
+              "items": {
+                "type": "string"
+              },
               "description": "List of specific options for the expert to choose from - be clear and descriptive"
+            },
+            "multiSelect": {
+              "type": "boolean",
+              "description": "Allow multiple selections"
+            },
+            "defaultSelection": {
+              "type": "number",
+              "description": "Index of default selection"
+            },
+            "context": {
+              "type": "string",
+              "description": "Additional context for the selection"
             }
           },
-          "required": ["question", "options"]
+          "required": [
+            "question",
+            "options"
+          ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_reviewCode",
+        "displayName": "📝 Review Code",
+        "userDescription": "Allow Copilot to request expert code review for quality, security, or performance concerns",
+        "modelDescription": "Use this tool when you need expert review of generated or modified code. This is essential for: 1) Security-sensitive code sections, 2) Performance-critical implementations, 3) Complex algorithms or business logic, 4) API design decisions, 5) Code that interacts with external systems. Include the code, language, and specific areas to focus on.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "review",
+        "icon": "$(code)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "code": {
+              "type": "string",
+              "description": "Code to review"
+            },
+            "language": {
+              "type": "string",
+              "description": "Programming language"
+            },
+            "question": {
+              "type": "string",
+              "description": "Specific review question"
+            },
+            "focusAreas": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              },
+              "description": "Areas to focus on (e.g., security, performance)"
+            }
+          },
+          "required": [
+            "code",
+            "language"
+          ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_confirmAction",
+        "displayName": "⚠️ Confirm Action",
+        "userDescription": "Allow Copilot to request expert confirmation before performing critical or destructive actions",
+        "modelDescription": "Use this tool before performing any destructive, critical, or potentially risky actions. ALWAYS use for: 1) Deletions of files or data, 2) Major refactoring that affects multiple files, 3) Security-sensitive changes, 4) Database schema modifications, 5) Configuration changes that could break the system. Always explain the action clearly and potential consequences.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "confirm",
+        "icon": "$(warning)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "description": "Description of the action to confirm"
+            },
+            "details": {
+              "type": "string",
+              "description": "Additional details about the action"
+            }
+          },
+          "required": [
+            "action"
+          ]
         }
       }
     ]
@@ -79,13 +289,52 @@
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
     "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "lint:fix": "eslint src --ext ts --fix",
+    "test": "npm run compile && vscode-test",
+    "test:unit": "npm run compile && vscode-test --grep 'Unit Tests'",
+    "test:integration": "npm run compile && vscode-test --grep 'Integration Tests'",
+    "test:mcp": "npm run compile && vscode-test --grep 'MCP Integration Tests'",
+    "test:all": "npm run compile && npm run test:unit && npm run test:integration && npm run test:mcp",
+    "test:watch": "npm run compile && vscode-test --watch",
+    "test:coverage": "npm run compile && c8 vscode-test",
+    "clean": "rimraf out *.vsix",
+    "clean:install": "npm run clean && npm ci",
+    "build": "npm run clean && npm run compile",
+    "build:production": "npm run clean && npm run compile && npm run lint && npm run test:all",
     "package": "vsce package",
+    "package:pre-release": "vsce package --pre-release",
     "publish": "vsce publish",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "publish:pre-release": "vsce publish --pre-release",
+    "validate": "vsce package --no-dependencies && echo 'Package validation successful'",
+    "ci:prepare": "npm ci && npm run compile",
+    "ci:test": "npm run lint && npm run test:all",
+    "ci:package": "npm run validate",
+    "dev:setup": "npm install && npm run compile && npm run test",
+    "security:audit": "npm audit --audit-level=moderate",
+    "security:fix": "npm audit fix",
+    "deps:check": "npm outdated",
+    "deps:update": "npm update",
+    "release:patch": "npm version patch && npm run package",
+    "release:minor": "npm version minor && npm run package",
+    "release:major": "npm version major && npm run package"
   },
   "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^24.5.1",
+    "@types/sinon": "^17.0.4",
     "@types/vscode": "^1.95.0",
-    "@types/node": "20.x",
-    "typescript": "^5.4.5"
+    "@typescript-eslint/eslint-plugin": "^8.44.0",
+    "@typescript-eslint/parser": "^8.44.0",
+    "@vscode/test-cli": "^0.0.11",
+    "@vscode/test-electron": "^2.5.2",
+    "@vscode/vsce": "^3.6.0",
+    "c8": "^10.1.3",
+    "eslint": "^9.35.0",
+    "mocha": "^11.7.2",
+    "rimraf": "^6.0.1",
+    "sinon": "^21.0.0",
+    "typescript": "^5.9.2"
   }
 }
