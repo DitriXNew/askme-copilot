@@ -256,73 +256,6 @@ Expert: "Add rate limiting and use constant-time comparison for tokens"
 - `action` - What will be done
 - `details` - Potential impacts
 
-## 🎯 Best Practices
-
-### For Developers
-
-1. **Be Specific in Responses**
-   - ❌ "Make it better"
-   - ✅ "Add input validation and error handling"
-
-2. **Provide Context**
-   - ❌ "No"
-   - ✅ "No, because this would break backward compatibility"
-
-3. **Use Quick Actions**
-   - "Needs Clarification" template
-   - "Suggest Alternative" for better approaches
-   - "Skip" for irrelevant questions
-
-4. **Review Thoughtfully**
-   - Focus on security and performance
-   - Suggest improvements, not just problems
-   - Consider maintainability
-
-### For Team Leads
-
-1. **Standardize Prompts**
-   - Create team-specific system prompts
-   - Define escalation triggers for your domain
-   - Set coding standards in prompts
-
-2. **Monitor Usage**
-   - Use `askMeCopilot.showMetrics` command
-   - Track common questions
-   - Identify knowledge gaps
-
-3. **Iterate and Improve**
-   - Refine prompts based on usage
-   - Add domain-specific triggers
-   - Share successful patterns
-
-## 🔧 Advanced Configuration
-
-### Custom Workspace Prompts
-
-Create `.copilot/system-prompt.md` in your workspace:
-
-```markdown
-# Project-Specific Rules
-
-In addition to expert collaboration rules:
-
-1. ALWAYS ask expert before modifying:
-   - Anything in /src/core/
-   - Database migrations
-   - API contracts
-   - Authentication logic
-
-2. Use company style guide:
-   - Component naming: PascalCase
-   - Functions: camelCase
-   - Constants: UPPER_SNAKE_CASE
-
-3. Required reviews:
-   - All SQL queries
-   - External API integrations
-   - Payment processing code
-```
-
 ### Notification Preferences
 
 ```json
@@ -382,41 +315,9 @@ Metrics tracked:
    - Test with explicit instruction
 
 3. **Review model:**
-   - Works best with Claude Sonnet 3.5+
-   - GPT-4 also supported
+   - Works best with Claude Sonnet 4.0
+   - Other models also supported
    - Free models have limitations
-
-### Dialogs Not Appearing
-
-1. Check notification settings
-2. Look for dialogs in other VS Code windows
-3. Check extension logs: `Ctrl+Shift+P > Output > AskMeCopilot`
-
-### Response Cache Issues
-
-Clear cache: `Ctrl+Shift+P > Ask Me Copilot: Clear Response Cache`
-
-## 🤝 Contributing
-
-We welcome contributions! Areas we'd love help with:
-
-- 🌍 Internationalization
-- 🎨 UI themes
-- 🔧 Additional tool types
-- 📚 Documentation
-- 🐛 Bug fixes
-
-See [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.
-
-## 📄 License
-
-MIT License - see [LICENSE](LICENSE)
-
-## 🙏 Acknowledgments
-
-- GitHub Copilot team for the Language Model Tools API
-- VS Code team for the extension framework
-- Our amazing community of developers who've made this better
 
 ## 💡 Philosophy
 
@@ -427,24 +328,6 @@ Traditional AI assistants try to be omniscient servants. We believe AI should be
 - Asks for clarification
 - Requests review
 - Confirms risky actions
-
-This isn't a limitation - it's how great developers actually work.
-
-## 🚀 What's Next
-
-### Upcoming Features
-- 🔄 Conversation memory across sessions
-- 📊 Team analytics dashboard
-- 🔗 Integration with issue trackers
-- 🎯 Custom tool definitions
-- 🌐 Multi-language support
-- 📱 Mobile companion app
-
-### Research Areas
-- Predictive escalation patterns
-- Learning from expert responses
-- Automatic prompt refinement
-- Context-aware suggestions
 
 ---
 

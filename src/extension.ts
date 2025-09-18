@@ -1,6 +1,9 @@
 // src/extension.ts
 import * as vscode from 'vscode';
 import * as path from 'path';
+import * as fs from 'fs';
+import * as os from 'os';
+import { play } from 'sound-play';
 
 // Enhanced logging with multiple levels
 enum LogLevel {
@@ -46,6 +49,29 @@ class Logger {
 }
 
 let logger: Logger;
+
+// Sound notification utility
+async function playNotificationSound(context?: vscode.ExtensionContext) {
+    try {
+        // Try to use the notification_soft.wav file from extension
+        const soundFilePath = context 
+            ? path.join(context.extensionPath, 'src', 'notification_soft.wav')
+            : null;
+        
+        if (soundFilePath && fs.existsSync(soundFilePath)) {
+            // Play the sound file directly
+            await play(soundFilePath).catch(() => {
+                logger?.debug('Failed to play notification sound from file');
+            });
+        } else {
+            logger?.debug('Sound file not found or no context provided');
+        }
+        
+    } catch (error) {
+        logger?.debug('Failed to play notification sound:', error);
+        // Silent fallback - no sound is better than crashing
+    }
+}
 
 // Enhanced interfaces with validation
 interface IAskExpertParameters {
@@ -168,13 +194,12 @@ class AnalyticsCollector {
 const analytics = new AnalyticsCollector();
 
 // Enhanced notification system
-async function showNotification(message: string, priority: 'low' | 'normal' | 'high' | 'critical' = 'normal') {
+async function showNotification(message: string, priority: 'low' | 'normal' | 'high' | 'critical' = 'normal', context?: vscode.ExtensionContext) {
     const style = ConfigurationManager.notificationStyle;
     
     // Play sound if enabled
     if (ConfigurationManager.enableSoundNotification && priority !== 'low') {
-        // VS Code doesn't support direct sound, but we can use system notifications
-        // This is a placeholder for potential future enhancement
+        await playNotificationSound(context);
     }
     
     const iconMap = {
@@ -352,7 +377,7 @@ class AskExpertTool extends BaseTool<IAskExpertParameters> {
             return this.createCancelResult();
         }
         
-        const shouldAnswer = await showNotification('Expert input needed', priority);
+        const shouldAnswer = await showNotification('Expert input needed', priority, this.context);
         if (!shouldAnswer) {
             return this.createCancelResult();
         }
@@ -491,7 +516,7 @@ class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
             return this.createCancelResult();
         }
         
-        await showNotification('Selection needed', 'normal');
+        await showNotification('Selection needed', 'normal', this.context);
         
         try {
             const result = await this.showSelectionWebView(question, choices, multiSelect, defaultSelection, context);
@@ -604,7 +629,7 @@ class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
             return this.createCancelResult();
         }
         
-        await showNotification('Code review requested', 'normal');
+        await showNotification('Code review requested', 'normal', this.context);
         
         try {
             const review = await this.showCodeReviewDialog(code, language, question, focusAreas);
