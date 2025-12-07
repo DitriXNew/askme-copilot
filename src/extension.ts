@@ -139,6 +139,18 @@ interface IReviewCodeParameters {
     focusAreas?: string[];
 }
 
+// Interface for expert response with attachments
+interface IExpertResponse {
+    text: string;
+    attachments: IAttachment[];
+}
+
+interface IAttachment {
+    data: string; // base64 encoded
+    mimeType: string;
+    name: string;
+}
+
 interface IConfirmActionParameters {
     action: string;
     details?: string;
@@ -426,19 +438,44 @@ class AskExpertTool extends BaseTool<IAskExpertParameters> {
         }
         
         try {
-            const answer = await this.showWebViewDialog(question, context, previousAnswer);
+            const response = await this.showWebViewDialog(question, context, previousAnswer);
             
             if (token.isCancellationRequested) {
                 return this.createCancelResult();
             }
             
-            if (answer && answer.trim()) {
+            if (response && response.text.trim()) {
                 analytics.trackResponse(startTime);
-                const response = `Expert responded: "${answer}"`;
-                responseCache.set(cacheKey, response);
-                return new vscode.LanguageModelToolResult([
-                    new vscode.LanguageModelTextPart(response)
-                ]);
+                const textResponse = `Expert responded: "${response.text}"`;
+                responseCache.set(cacheKey, textResponse);
+                
+                // Build result parts with text and any attachments
+                const resultParts: (vscode.LanguageModelTextPart | vscode.LanguageModelDataPart)[] = [
+                    new vscode.LanguageModelTextPart(textResponse)
+                ];
+                
+                // Add image attachments if any
+                if (response.attachments && response.attachments.length > 0) {
+                    for (const attachment of response.attachments) {
+                        try {
+                            // Convert base64 to Uint8Array
+                            const binaryString = Buffer.from(attachment.data, 'base64');
+                            const bytes = new Uint8Array(binaryString);
+                            
+                            // Use LanguageModelDataPart.image for image attachments
+                            if (attachment.mimeType.startsWith('image/')) {
+                                resultParts.push(
+                                    vscode.LanguageModelDataPart.image(bytes, attachment.mimeType)
+                                );
+                                logger.info(`Added image attachment: ${attachment.name} (${attachment.mimeType})`);
+                            }
+                        } catch (err) {
+                            logger.warn(`Failed to process attachment ${attachment.name}:`, err);
+                        }
+                    }
+                }
+                
+                return new vscode.LanguageModelToolResult(resultParts);
             } else {
                 analytics.trackCancellation();
                 return this.createCancelResult();
@@ -448,7 +485,7 @@ class AskExpertTool extends BaseTool<IAskExpertParameters> {
         }
     }
     
-    private async showWebViewDialog(question: string, context?: string, previousAnswer?: string): Promise<string | null> {
+    private async showWebViewDialog(question: string, context?: string, previousAnswer?: string): Promise<IExpertResponse | null> {
         return new Promise((resolve) => {
             const panel = vscode.window.createWebviewPanel(
                 'askExpertDialog',
@@ -476,7 +513,10 @@ class AskExpertTool extends BaseTool<IAskExpertParameters> {
                             });
                             break;
                         case 'submit':
-                            resolve(message.text);
+                            resolve({
+                                text: message.text,
+                                attachments: message.attachments || []
+                            });
                             panel.dispose();
                             break;
                         case 'cancel':
@@ -1169,6 +1209,182 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
             color: white;
         }
         
+        /* Attachments Section Styles */
+        .attachments-section {
+            margin-bottom: 25px;
+        }
+        
+        .attachments-label {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 12px;
+            font-weight: 600;
+            color: var(--vscode-input-foreground);
+        }
+        
+        .attachment-count {
+            margin-left: auto;
+            font-size: 12px;
+            color: var(--vscode-descriptionForeground);
+            font-weight: normal;
+        }
+        
+        .drop-zone {
+            border: 2px dashed var(--vscode-input-border);
+            border-radius: 8px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            background: var(--vscode-input-background);
+            cursor: pointer;
+            position: relative;
+        }
+        
+        .drop-zone:hover {
+            border-color: var(--vscode-focusBorder);
+            background: var(--vscode-textCodeBlock-background);
+        }
+        
+        .drop-zone.drag-over {
+            border-color: var(--vscode-textLink-foreground);
+            background: var(--vscode-textBlockQuote-background);
+            transform: scale(1.02);
+        }
+        
+        .drop-zone-icon {
+            font-size: 32px;
+            margin-bottom: 10px;
+        }
+        
+        .drop-zone-text {
+            color: var(--vscode-descriptionForeground);
+            font-size: 14px;
+        }
+        
+        .drop-zone-hint {
+            color: var(--vscode-descriptionForeground);
+            font-size: 12px;
+            margin-top: 8px;
+            opacity: 0.8;
+        }
+        
+        .attachments-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+        }
+        
+        .attachment-item {
+            position: relative;
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 8px;
+            overflow: hidden;
+            background: var(--vscode-textCodeBlock-background);
+            transition: all 0.2s ease;
+        }
+        
+        .attachment-item:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+        }
+        
+        .attachment-preview {
+            width: 100%;
+            height: 100px;
+            object-fit: cover;
+            display: block;
+            cursor: pointer;
+        }
+        
+        .attachment-info {
+            padding: 8px;
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .attachment-name {
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 80px;
+        }
+        
+        .attachment-remove {
+            background: var(--vscode-editorError-foreground);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 12px;
+            transition: transform 0.2s ease;
+            flex-shrink: 0;
+        }
+        
+        .attachment-remove:hover {
+            transform: scale(1.1);
+        }
+        
+        .hidden-input {
+            display: none;
+        }
+        
+        .attachment-preview-modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.3s ease;
+        }
+        
+        .attachment-preview-modal.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        
+        .preview-modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            object-fit: contain;
+            border-radius: 8px;
+        }
+        
+        .preview-modal-close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            font-size: 20px;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+        
+        .preview-modal-close:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+        
         @media (max-width: 600px) {
             .header {
                 flex-direction: column;
@@ -1181,6 +1397,10 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
             
             .button-group {
                 justify-content: center;
+            }
+            
+            .attachments-grid {
+                grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
             }
         }
     </style>
@@ -1228,9 +1448,31 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
             <textarea 
                 id="answerInput" 
                 class="answer-input" 
-                placeholder="Provide your expert guidance here..."
+                placeholder="Provide your expert guidance here... (You can also paste images with Ctrl+V)"
                 autofocus
             ></textarea>
+        </div>
+        
+        <div class="attachments-section">
+            <label class="attachments-label">
+                📎 Attachments
+                <span class="attachment-count" id="attachmentCount">0 files</span>
+            </label>
+            
+            <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                <div class="drop-zone-icon">📁</div>
+                <div class="drop-zone-text">Drag & drop images here or click to browse</div>
+                <div class="drop-zone-hint">Supports: PNG, JPEG, GIF, WebP • Max 5MB per file • Paste images with Ctrl+V</div>
+            </div>
+            
+            <input type="file" id="fileInput" class="hidden-input" multiple accept="image/*">
+            
+            <div class="attachments-grid" id="attachmentsGrid"></div>
+        </div>
+        
+        <div id="previewModal" class="attachment-preview-modal" onclick="closePreviewModal()">
+            <button class="preview-modal-close" onclick="closePreviewModal()">✕</button>
+            <img id="previewImage" class="preview-modal-content" src="" alt="Preview">
         </div>
         
         <div class="button-container">
@@ -1280,9 +1522,20 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         const previousAnswerSection = document.getElementById('previousAnswerSection');
         const previousAnswerContent = document.getElementById('previousAnswerContent');
         const charCounter = document.getElementById('charCounter');
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const attachmentsGrid = document.getElementById('attachmentsGrid');
+        const attachmentCount = document.getElementById('attachmentCount');
+        const previewModal = document.getElementById('previewModal');
+        const previewImage = document.getElementById('previewImage');
         
         // State management
         let state = vscode.getState() || {};
+        
+        // Attachments storage
+        let attachments = [];
+        const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
+        const SUPPORTED_TYPES = ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/bmp'];
         
         // Templates for quick actions
         const templates = {
@@ -1360,18 +1613,23 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         // Action handlers
         function submit() {
             const text = answerInput.value.trim();
-            if (text) {
+            if (text || attachments.length > 0) {
                 state.draft = ''; // Clear draft on submit
                 vscode.setState(state);
                 vscode.postMessage({
                     command: 'submit',
-                    text: text
+                    text: text || '[Attachments only]',
+                    attachments: attachments.map(a => ({
+                        data: a.data,
+                        mimeType: a.mimeType,
+                        name: a.name
+                    }))
                 });
             }
         }
         
         function cancel() {
-            if (answerInput.value.trim() && !confirm('You have unsaved changes. Are you sure you want to cancel?')) {
+            if ((answerInput.value.trim() || attachments.length > 0) && !confirm('You have unsaved changes. Are you sure you want to cancel?')) {
                 return;
             }
             vscode.postMessage({ command: 'cancel' });
@@ -1380,14 +1638,16 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         function skipQuestion() {
             vscode.postMessage({
                 command: 'submit',
-                text: '[SKIPPED] Expert chose to skip this question'
+                text: '[SKIPPED] Expert chose to skip this question',
+                attachments: []
             });
         }
         
         function needMoreInfo() {
             vscode.postMessage({
                 command: 'submit',
-                text: '[NEEDS MORE INFO] Please provide additional context or clarification'
+                text: '[NEEDS MORE INFO] Please provide additional context or clarification',
+                attachments: []
             });
         }
         
@@ -1421,6 +1681,164 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         answerInput.focus();
         updateButtonStates();
         updateCharCounter();
+        
+        // =============================================
+        // ATTACHMENTS HANDLING
+        // =============================================
+        
+        // Update attachment count display
+        function updateAttachmentCount() {
+            attachmentCount.textContent = attachments.length + ' file' + (attachments.length !== 1 ? 's' : '');
+            updateButtonStates();
+        }
+        
+        // Process file and add to attachments
+        function processFile(file) {
+            if (!SUPPORTED_TYPES.includes(file.type)) {
+                showNotification('Unsupported file type: ' + file.type, 'error');
+                return;
+            }
+            
+            if (file.size > MAX_FILE_SIZE) {
+                showNotification('File too large: ' + file.name + ' (max 5MB)', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const base64 = e.target.result.split(',')[1]; // Remove data:...;base64, prefix
+                const attachment = {
+                    id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+                    data: base64,
+                    mimeType: file.type,
+                    name: file.name || 'pasted-image-' + Date.now() + '.png',
+                    preview: e.target.result
+                };
+                
+                attachments.push(attachment);
+                renderAttachments();
+                updateAttachmentCount();
+                showNotification('Added: ' + attachment.name, 'success');
+            };
+            reader.readAsDataURL(file);
+        }
+        
+        // Render attachments grid
+        function renderAttachments() {
+            attachmentsGrid.innerHTML = attachments.map(att => \`
+                <div class="attachment-item" data-id="\${att.id}">
+                    <img 
+                        src="\${att.preview}" 
+                        alt="\${att.name}" 
+                        class="attachment-preview"
+                        onclick="openPreview('\${att.preview}')"
+                    >
+                    <div class="attachment-info">
+                        <span class="attachment-name" title="\${att.name}">\${att.name}</span>
+                        <button class="attachment-remove" onclick="removeAttachment('\${att.id}')" title="Remove">✕</button>
+                    </div>
+                </div>
+            \`).join('');
+        }
+        
+        // Remove attachment
+        function removeAttachment(id) {
+            attachments = attachments.filter(a => a.id !== id);
+            renderAttachments();
+            updateAttachmentCount();
+        }
+        
+        // Open preview modal
+        function openPreview(src) {
+            previewImage.src = src;
+            previewModal.classList.add('visible');
+        }
+        
+        // Close preview modal
+        function closePreviewModal() {
+            previewModal.classList.remove('visible');
+            previewImage.src = '';
+        }
+        
+        // Show notification
+        function showNotification(message, type) {
+            const indicator = document.createElement('div');
+            indicator.className = 'status-indicator ' + (type === 'error' ? '' : 'saving');
+            indicator.textContent = (type === 'error' ? '❌ ' : '✓ ') + message;
+            indicator.style.position = 'fixed';
+            indicator.style.bottom = '20px';
+            indicator.style.right = '20px';
+            indicator.style.zIndex = '1000';
+            document.body.appendChild(indicator);
+            setTimeout(() => indicator.remove(), 3000);
+        }
+        
+        // Drag and drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.add('drag-over');
+        });
+        
+        dropZone.addEventListener('dragleave', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+        });
+        
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dropZone.classList.remove('drag-over');
+            
+            const files = Array.from(e.dataTransfer.files);
+            files.forEach(file => {
+                if (file.type.startsWith('image/')) {
+                    processFile(file);
+                }
+            });
+        });
+        
+        // File input handler
+        fileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            files.forEach(file => processFile(file));
+            fileInput.value = ''; // Reset for same file selection
+        });
+        
+        // Paste handler for images
+        document.addEventListener('paste', (e) => {
+            const items = Array.from(e.clipboardData.items);
+            let hasImage = false;
+            
+            items.forEach(item => {
+                if (item.type.startsWith('image/')) {
+                    hasImage = true;
+                    const file = item.getAsFile();
+                    if (file) {
+                        processFile(file);
+                    }
+                }
+            });
+            
+            // Only prevent default if we handled an image
+            if (hasImage) {
+                e.preventDefault();
+            }
+        });
+        
+        // Close modal on Escape
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && previewModal.classList.contains('visible')) {
+                e.preventDefault();
+                e.stopPropagation();
+                closePreviewModal();
+                return;
+            }
+        });
+        
+        // Initial attachment count
+        updateAttachmentCount();
     </script>
 </body>
 </html>`;
