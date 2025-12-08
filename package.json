@@ -112,9 +112,9 @@
         },
         "askMeCopilot.responseTimeout": {
           "type": "number",
-          "default": 300000,
+          "default": 0,
           "minimum": 0,
-          "description": "Timeout for expert response in milliseconds (0 = no timeout)"
+          "description": "Timeout for expert response in milliseconds (0 = no timeout, waits indefinitely)"
         },
         "askMeCopilot.enableResponseCache": {
           "type": "boolean",

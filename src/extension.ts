@@ -209,7 +209,7 @@ class ConfigurationManager {
     }
     
     static get responseTimeout(): number {
-        return vscode.workspace.getConfiguration(this.SECTION).get('responseTimeout', 300000); // 5 minutes
+        return vscode.workspace.getConfiguration(this.SECTION).get('responseTimeout', 0); // 0 = no timeout
     }
 }
 

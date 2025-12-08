@@ -185,7 +185,7 @@ Remember: You're part of a team. Great developers ask questions, seek reviews, a
   "askMeCopilot.notificationStyle": "normal",  // or "prominent" for modal dialogs
   "askMeCopilot.enableSoundNotification": true,
   "askMeCopilot.autoFocusDialog": true,
-  "askMeCopilot.responseTimeout": 300000,  // 5 minutes
+  "askMeCopilot.responseTimeout": 0,  // 0 = no timeout (default), waits indefinitely for expert
   "askMeCopilot.enableResponseCache": true
 }
 ```
