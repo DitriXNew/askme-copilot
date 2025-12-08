@@ -6,9 +6,32 @@
 [![GitHub Stars](https://img.shields.io/github/stars/DitriXNew/askme-copilot?style=flat-square)](https://github.com/DitriXNew/askme-copilot)
 [![CI/CD Pipeline](https://github.com/DitriXNew/askme-copilot/actions/workflows/ci.yml/badge.svg)](https://github.com/DitriXNew/askme-copilot/actions/workflows/ci.yml)
 [![Node.js Version](https://img.shields.io/badge/node-%3E%3D18.0.0-brightgreen)](https://nodejs.org/)
-[![VS Code Version](https://img.shields.io/badge/vscode-%3E%3D1.95.0-blue)](https://code.visualstudio.com/)
+[![VS Code Version](https://img.shields.io/badge/vscode-%3E%3D1.96.0-blue)](https://code.visualstudio.com/)
 
 > **Transform GitHub Copilot from a servant into a collaborative partner**
+
+## 🆕 What's New in v1.4.0
+
+### 🖼️ Image Attachments Support
+- **Drag & Drop**: Drop images directly into the expert dialog
+- **Clipboard Paste**: Use `Ctrl+V` to paste screenshots
+- **Multiple Images**: Attach multiple images at once
+- **Preview Modal**: Click to view images in full size
+- Supported formats: PNG, JPEG, GIF, WebP, BMP (max 5MB each)
+
+### 📸 Read Image Tool (NEW!)
+Copilot can now read images from your project files:
+```
+# Copilot can use ask-me-copilot-tool_readImage to:
+- Analyze UI mockups and implement designs
+- Read diagrams and architecture charts
+- View screenshots for debugging
+- Inspect icons, logos, and graphics
+```
+
+### 🔧 Bug Fixes
+- Fixed clipboard paste handling in WebView
+- Improved image processing pipeline
 
 ## 🚀 The Problem We Solve
 
@@ -108,6 +131,12 @@ FOCUS AREAS: security, performance, maintainability, testing
 ### Confirm Action (ask-me-copilot-tool_confirmAction)
 USE FOR: ANY destructive action, breaking changes, production configs
 NEVER SKIP for: Deletions, schema changes, API modifications
+
+### Read Image (ask-me-copilot-tool_readImage)
+USE FOR: Analyzing project images, UI mockups, diagrams, icons
+PARAMETERS:
+- filePath: Path to the image file (relative or absolute)
+- description: Optional context about what to look for
 
 ## 4. COLLABORATION WORKFLOW
 1. START: Acknowledge task, identify ambiguities

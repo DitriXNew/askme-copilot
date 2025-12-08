@@ -9,7 +9,7 @@
     "email": "support@askmecopilot.dev"
   },
   "engines": {
-    "vscode": "^1.96.0"
+    "vscode": "^1.106.0"
   },
   "categories": [
     "AI",
@@ -280,6 +280,31 @@
           },
           "required": [
             "action"
+          ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_readImage",
+        "displayName": "🖼️ Read Image",
+        "userDescription": "Read and analyze an image file from the workspace",
+        "modelDescription": "Use this tool to read and analyze image files from the user's project. This is useful for: 1) Analyzing UI mockups and implementing designs, 2) Reading architecture diagrams or flowcharts, 3) Viewing screenshots for debugging visual issues, 4) Inspecting icons, logos, or graphics in the project, 5) Understanding visual assets before making changes. Provide the file path (relative to workspace or absolute) and optionally describe what you're looking for.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "image",
+        "icon": "$(file-media)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Path to the image file (relative to workspace root or absolute path). Supports: PNG, JPEG, GIF, WebP, BMP, SVG, ICO"
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional description of what you're looking for in the image or why you need to see it"
+            }
+          },
+          "required": [
+            "filePath"
           ]
         }
       }

@@ -156,6 +156,12 @@ interface IConfirmActionParameters {
     details?: string;
 }
 
+// Interface for reading image files
+interface IReadImageParameters {
+    filePath: string;
+    description?: string;
+}
+
 // Response caching for better performance
 class ResponseCache {
     private cache = new Map<string, { response: string; timestamp: number }>();
@@ -303,12 +309,14 @@ export function activate(context: vscode.ExtensionContext) {
     const selectFromListTool = new SelectFromListTool(context);
     const reviewCodeTool = new ReviewCodeTool(context);
     const confirmActionTool = new ConfirmActionTool(context);
+    const readImageTool = new ReadImageTool(context);
     
     context.subscriptions.push(
         vscode.lm.registerTool('ask-me-copilot-tool_askExpert', askExpertTool),
         vscode.lm.registerTool('ask-me-copilot-tool_selectFromList', selectFromListTool),
         vscode.lm.registerTool('ask-me-copilot-tool_reviewCode', reviewCodeTool),
-        vscode.lm.registerTool('ask-me-copilot-tool_confirmAction', confirmActionTool)
+        vscode.lm.registerTool('ask-me-copilot-tool_confirmAction', confirmActionTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_readImage', readImageTool)
     );
     
     logger.info('✅ Registered all language model tools');
@@ -837,6 +845,98 @@ class ConfirmActionTool extends BaseTool<IConfirmActionParameters> {
             confirmationMessages: {
                 title: 'Action Confirmation',
                 message: new vscode.MarkdownString(`**Action:** ${options.input.action}`)
+            }
+        };
+    }
+}
+
+// New Tool: Read Image from file path
+class ReadImageTool extends BaseTool<IReadImageParameters> {
+    async invoke(
+        options: vscode.LanguageModelToolInvocationOptions<IReadImageParameters>,
+        token: vscode.CancellationToken
+    ): Promise<vscode.LanguageModelToolResult> {
+        const validationError = this.validateInput(options.input, ['filePath']);
+        if (validationError) {
+            return this.createErrorResult(validationError);
+        }
+        
+        const { filePath, description } = options.input;
+        
+        if (token.isCancellationRequested) {
+            return this.createCancelResult();
+        }
+        
+        try {
+            // Resolve the file path
+            let resolvedPath = filePath;
+            
+            // Handle relative paths - resolve from workspace
+            if (!path.isAbsolute(filePath)) {
+                const workspaceFolders = vscode.workspace.workspaceFolders;
+                if (workspaceFolders && workspaceFolders.length > 0) {
+                    resolvedPath = path.join(workspaceFolders[0].uri.fsPath, filePath);
+                }
+            }
+            
+            // Check if file exists
+            if (!fs.existsSync(resolvedPath)) {
+                return this.createErrorResult(`File not found: ${resolvedPath}`);
+            }
+            
+            // Read file
+            const fileBuffer = fs.readFileSync(resolvedPath);
+            const bytes = new Uint8Array(fileBuffer);
+            
+            // Determine MIME type from extension
+            const ext = path.extname(resolvedPath).toLowerCase();
+            const mimeTypes: { [key: string]: string } = {
+                '.png': 'image/png',
+                '.jpg': 'image/jpeg',
+                '.jpeg': 'image/jpeg',
+                '.gif': 'image/gif',
+                '.webp': 'image/webp',
+                '.bmp': 'image/bmp',
+                '.svg': 'image/svg+xml',
+                '.ico': 'image/x-icon'
+            };
+            
+            const mimeType = mimeTypes[ext];
+            if (!mimeType) {
+                return this.createErrorResult(`Unsupported image format: ${ext}. Supported: ${Object.keys(mimeTypes).join(', ')}`);
+            }
+            
+            // Check file size (max 5MB)
+            if (bytes.length > 5 * 1024 * 1024) {
+                return this.createErrorResult(`File too large: ${(bytes.length / 1024 / 1024).toFixed(2)}MB. Maximum: 5MB`);
+            }
+            
+            logger.info(`Reading image: ${resolvedPath} (${mimeType}, ${bytes.length} bytes)`);
+            
+            // Build result with text description and image
+            const resultParts: (vscode.LanguageModelTextPart | vscode.LanguageModelDataPart)[] = [
+                new vscode.LanguageModelTextPart(
+                    `Image loaded from: ${path.basename(resolvedPath)}${description ? `\nDescription: ${description}` : ''}\nSize: ${(bytes.length / 1024).toFixed(1)}KB, Type: ${mimeType}`
+                ),
+                vscode.LanguageModelDataPart.image(bytes, mimeType)
+            ];
+            
+            return new vscode.LanguageModelToolResult(resultParts);
+            
+        } catch (error) {
+            return this.createErrorResult(`Failed to read image: ${error}`);
+        }
+    }
+    
+    prepareInvocation(
+        options: vscode.LanguageModelToolInvocationPrepareOptions<IReadImageParameters>,
+        _token: vscode.CancellationToken
+    ): vscode.PreparedToolInvocation {
+        return {
+            invocationMessage: `🖼️ Reading image: ${options.input.filePath}`,
+            confirmationMessages: {
+                title: 'Read Image File',
+                message: new vscode.MarkdownString(`**File:** ${options.input.filePath}${options.input.description ? `\n**Purpose:** ${options.input.description}` : ''}`)
             }
         };
     }
@@ -1806,26 +1906,54 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
             fileInput.value = ''; // Reset for same file selection
         });
         
-        // Paste handler for images
+        // Paste handler for images - works globally including when typing in textarea
         document.addEventListener('paste', (e) => {
+            // Check if clipboardData exists
+            if (!e.clipboardData || !e.clipboardData.items) {
+                return;
+            }
+            
             const items = Array.from(e.clipboardData.items);
             let hasImage = false;
             
-            items.forEach(item => {
-                if (item.type.startsWith('image/')) {
+            for (const item of items) {
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
                     hasImage = true;
                     const file = item.getAsFile();
                     if (file) {
                         processFile(file);
                     }
                 }
-            });
+            }
             
             // Only prevent default if we handled an image
+            // This allows text paste to work normally
             if (hasImage) {
                 e.preventDefault();
+                e.stopPropagation();
+            }
+        }, true); // Use capture phase to intercept before textarea
+        
+        // Also handle paste specifically on the drop zone
+        dropZone.addEventListener('paste', (e) => {
+            if (!e.clipboardData || !e.clipboardData.items) {
+                return;
+            }
+            
+            const items = Array.from(e.clipboardData.items);
+            for (const item of items) {
+                if (item.kind === 'file' && item.type.startsWith('image/')) {
+                    const file = item.getAsFile();
+                    if (file) {
+                        processFile(file);
+                    }
+                    e.preventDefault();
+                }
             }
         });
+        
+        // Make drop zone focusable for paste events
+        dropZone.setAttribute('tabindex', '0');
         
         // Close modal on Escape
         document.addEventListener('keydown', (e) => {
