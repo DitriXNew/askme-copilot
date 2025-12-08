@@ -1,195 +1,157 @@
-// Code Review Template - HTML template for code review dialog
+// Code Review Template - Uses base template components
+import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints } from './base';
+
 export const getCodeReviewTemplate = () => `<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Code Review</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/themes/prism-tomorrow.min.css">
     <style>
-        /* Base styles similar to other templates */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            padding: 20px;
-            background: var(--vscode-editor-background);
-            color: var(--vscode-editor-foreground);
-        }
+        ${getBaseStyles()}
         
-        .container {
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-        
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--vscode-panel-border);
-        }
-        
-        .header-icon {
-            font-size: 48px;
-        }
-        
-        .code-container {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 20px;
-            margin-bottom: 20px;
-        }
-        
+        /* Code review specific styles */
         .code-section {
-            background: var(--vscode-textCodeBlock-background);
-            border: 1px solid var(--vscode-panel-border);
-            border-radius: 8px;
-            overflow: hidden;
+            margin-bottom: var(--spacing-lg);
         }
         
         .code-header {
-            padding: 10px 15px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: var(--spacing-sm) var(--spacing-md);
             background: var(--vscode-titleBar-activeBackground);
-            border-bottom: 1px solid var(--vscode-panel-border);
-            font-weight: 600;
+            border: 1px solid var(--vscode-panel-border);
+            border-bottom: none;
+            border-radius: var(--radius-md) var(--radius-md) 0 0;
+            font-size: 12px;
+            font-weight: 500;
         }
         
-        .code-content {
-            padding: 15px;
-            overflow-x: auto;
+        .code-input {
+            width: 100%;
+            min-height: 250px;
             max-height: 400px;
-            overflow-y: auto;
-        }
-        
-        pre {
-            margin: 0;
+            padding: var(--spacing-lg);
+            border: 1px solid var(--vscode-panel-border);
+            border-radius: 0 0 var(--radius-md) var(--radius-md);
+            background: var(--vscode-textCodeBlock-background);
+            color: var(--vscode-editor-foreground);
+            font-family: var(--vscode-editor-font-family, 'Consolas', 'Monaco', 'Courier New', monospace);
             font-size: 13px;
             line-height: 1.5;
-        }
-        
-        .review-section {
-            background: var(--vscode-input-background);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 20px;
-        }
-        
-        .review-input {
-            width: 100%;
-            min-height: 200px;
-            padding: 15px;
-            border: 2px solid var(--vscode-input-border);
-            border-radius: 6px;
-            background: var(--vscode-editor-background);
-            color: var(--vscode-input-foreground);
-            font-family: inherit;
-            font-size: 14px;
             resize: vertical;
+            tab-size: 4;
+            white-space: pre;
+            overflow: auto;
         }
         
-        .focus-areas {
+        .code-input:focus {
+            outline: none;
+            border-color: var(--vscode-focusBorder);
+        }
+        
+        .focus-badges {
             display: flex;
             flex-wrap: wrap;
-            gap: 8px;
-            margin-bottom: 15px;
+            gap: var(--spacing-sm);
+            margin-bottom: var(--spacing-md);
         }
         
         .focus-badge {
-            padding: 4px 12px;
+            padding: var(--spacing-xs) var(--spacing-md);
             background: var(--vscode-badge-background);
             color: var(--vscode-badge-foreground);
             border-radius: 12px;
-            font-size: 12px;
-        }
-        
-        .button-container {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-        }
-        
-        .btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
+            font-size: 11px;
             font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
         }
         
-        .btn-primary {
-            background: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: var(--vscode-button-secondaryForeground);
-            border: 1px solid var(--vscode-button-border);
+        .review-question {
+            margin-bottom: var(--spacing-md);
+            font-size: 13px;
+            color: var(--vscode-descriptionForeground);
+            font-style: italic;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-icon">📝</div>
-            <div class="header-content">
-                <h1>Code Review Request</h1>
-                <div class="subtitle">Please review the following code</div>
-            </div>
+    <div class="dialog-container">
+        <div class="dialog-header">
+            <div class="dialog-header-icon">📝</div>
+            <h1 class="dialog-header-title">GitHub Copilot Code Review</h1>
         </div>
         
-        <div id="focusAreas" class="focus-areas"></div>
+        <div id="focusAreas" class="focus-badges"></div>
         
-        <div class="code-container">
-            <div class="code-section">
-                <div class="code-header">
-                    <span id="language">Code</span>
-                </div>
-                <div class="code-content">
-                    <pre><code id="codeContent"></code></pre>
-                </div>
+        <div id="reviewQuestion" class="review-question" style="display: none;"></div>
+        
+        <div class="code-section">
+            <div class="code-header">
+                <span id="language">Code</span>
+                <span style="font-size: 11px; color: var(--vscode-descriptionForeground);">
+                    You can edit the code below
+                </span>
             </div>
-        </div>
-        
-        <div class="review-section">
-            <label style="font-weight: 600; display: block; margin-bottom: 10px;">
-                Your Review:
-            </label>
             <textarea 
-                id="reviewInput" 
-                class="review-input" 
-                placeholder="Provide your code review feedback..."
+                id="codeInput" 
+                class="code-input" 
+                spellcheck="false"
             ></textarea>
         </div>
         
-        <div class="button-container">
-            <button class="btn btn-secondary" onclick="cancel()">Cancel</button>
-            <button class="btn btn-primary" onclick="submit()">Submit Review</button>
+        <div class="answer-section">
+            <div class="answer-header">
+                <span style="font-weight: 500; font-size: 13px;">Your Review:</span>
+            </div>
+            <textarea 
+                id="reviewInput" 
+                class="answer-input" 
+                placeholder="Provide your code review feedback... (Paste images with Ctrl+V)"
+            ></textarea>
         </div>
+        
+        ${getAttachmentsSection()}
+        
+        <div class="button-container">
+            <div class="button-group">
+                <button class="btn btn-danger" onclick="cancel()">Cancel</button>
+            </div>
+            
+            <div class="button-group">
+                <button class="btn btn-secondary" onclick="approveCode()">✓ Approve</button>
+                <button class="btn btn-primary" onclick="submit()" id="submitBtn">Submit Review</button>
+            </div>
+        </div>
+        
+        ${getKeyboardHints()}
     </div>
 
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/prism.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-javascript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-typescript.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/prism/1.29.0/components/prism-python.min.js"></script>
     <script>
-        const vscode = acquireVsCodeApi();
-        const codeContent = document.getElementById('codeContent');
+        ${getBaseScript()}
+        
+        const codeInput = document.getElementById('codeInput');
         const reviewInput = document.getElementById('reviewInput');
         const focusAreasContainer = document.getElementById('focusAreas');
         const languageLabel = document.getElementById('language');
+        const reviewQuestion = document.getElementById('reviewQuestion');
+        const submitBtn = document.getElementById('submitBtn');
+        
+        let originalCode = '';
         
         window.addEventListener('message', event => {
             const message = event.data;
             
             if (message.command === 'setCode') {
-                codeContent.textContent = message.code;
+                originalCode = message.code || '';
+                codeInput.value = originalCode;
                 languageLabel.textContent = message.language || 'Code';
                 
-                // Add focus areas if provided
+                if (message.question) {
+                    reviewQuestion.textContent = message.question;
+                    reviewQuestion.style.display = 'block';
+                }
+                
                 if (message.focusAreas && message.focusAreas.length > 0) {
                     message.focusAreas.forEach(area => {
                         const badge = document.createElement('span');
@@ -199,26 +161,85 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
                     });
                 }
                 
-                // Apply syntax highlighting
-                Prism.highlightElement(codeContent);
+                updateButtonState();
             }
         });
         
+        function updateButtonState() {
+            const hasReview = reviewInput.value.trim().length > 0;
+            const codeChanged = codeInput.value !== originalCode;
+            submitBtn.disabled = !hasReview && !codeChanged && attachments.length === 0;
+        }
+        
+        reviewInput.addEventListener('input', updateButtonState);
+        codeInput.addEventListener('input', updateButtonState);
+        
         function submit() {
             const review = reviewInput.value.trim();
+            const codeChanged = codeInput.value !== originalCode;
+            
+            let response = '';
+            
             if (review) {
+                response = review;
+            }
+            
+            if (codeChanged) {
+                response += (response ? '\\n\\n' : '') + '--- MODIFIED CODE ---\\n' + codeInput.value;
+            }
+            
+            if (response || attachments.length > 0) {
                 vscode.postMessage({
                     command: 'submit',
-                    text: review
+                    text: response || '[Attachments only]',
+                    attachments: attachments.map(a => ({
+                        data: a.data,
+                        mimeType: a.mimeType,
+                        name: a.name
+                    }))
                 });
             }
         }
         
+        function approveCode() {
+            vscode.postMessage({
+                command: 'submit',
+                text: '✅ Code approved. Looks good!',
+                attachments: []
+            });
+        }
+        
         function cancel() {
+            if ((reviewInput.value.trim() || codeInput.value !== originalCode) && !confirm('Discard changes?')) {
+                return;
+            }
             vscode.postMessage({ command: 'cancel' });
         }
         
+        // Keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
+                submit();
+            } else if (e.key === 'Escape' && !document.getElementById('previewModal').classList.contains('visible')) {
+                e.preventDefault();
+                cancel();
+            }
+        });
+        
+        // Tab handling in code textarea
+        codeInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+                e.preventDefault();
+                const start = codeInput.selectionStart;
+                const end = codeInput.selectionEnd;
+                codeInput.value = codeInput.value.substring(0, start) + '    ' + codeInput.value.substring(end);
+                codeInput.selectionStart = codeInput.selectionEnd = start + 4;
+            }
+        });
+        
         vscode.postMessage({ command: 'ready' });
+        updateButtonState();
     </script>
 </body>
 </html>`;

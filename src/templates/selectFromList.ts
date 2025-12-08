@@ -1,4 +1,6 @@
-// Select From List Template - HTML template for option selection dialog
+// Select From List Template - Uses base template components
+import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints } from './base';
+
 export const getSelectFromListTemplate = () => `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,326 +8,74 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Selection Required</title>
     <style>
-        :root {
-            --animation-duration: 0.3s;
-        }
+        ${getBaseStyles()}
         
-        * {
-            box-sizing: border-box;
-        }
-        
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-            margin: 0;
-            padding: 0;
-            background: var(--vscode-editor-background);
-            color: var(--vscode-editor-foreground);
-            animation: fadeIn var(--animation-duration) ease-in;
-        }
-        
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-        
-        .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 20px;
-        }
-        
-        .header {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--vscode-panel-border);
-        }
-        
-        .header-icon {
-            font-size: 48px;
-            animation: rotate 4s linear infinite;
-        }
-        
-        @keyframes rotate {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-        }
-        
-        .header-content h1 {
-            margin: 0;
-            font-size: 28px;
-            font-weight: 600;
-        }
-        
-        .header-content .subtitle {
-            margin-top: 5px;
-            color: var(--vscode-descriptionForeground);
-            font-size: 14px;
-        }
-        
-        .main-content {
-            display: grid;
-            grid-template-columns: 1fr 380px;
-            gap: 30px;
-        }
-        
-        .question-panel {
-            background: linear-gradient(135deg,
-                var(--vscode-textBlockQuote-background) 0%,
-                var(--vscode-editor-background) 100%);
-            border-radius: 12px;
-            padding: 25px;
-            border: 1px solid var(--vscode-panel-border);
-        }
-        
-        .question-content {
-            font-size: 18px;
-            line-height: 1.8;
-            margin-bottom: 25px;
-        }
-        
-        .context-section {
-            background: var(--vscode-textCodeBlock-background);
-            border-left: 3px solid var(--vscode-textLink-foreground);
-            padding: 15px;
-            border-radius: 8px;
-            margin-top: 20px;
-        }
-        
-        .options-panel {
-            background: var(--vscode-sideBar-background);
-            border-radius: 12px;
-            padding: 20px;
-            border: 1px solid var(--vscode-panel-border);
-            max-height: calc(100vh - 200px);
-            overflow-y: auto;
-        }
-        
-        .options-title {
-            font-weight: 600;
-            font-size: 16px;
-            margin-bottom: 20px;
-            color: var(--vscode-foreground);
-            display: flex;
-            align-items: center;
-            gap: 10px;
-        }
-        
-        .option-item {
-            display: flex;
-            align-items: center;
-            padding: 14px 16px;
-            margin-bottom: 12px;
-            background: var(--vscode-list-inactiveSelectionBackground);
-            border: 2px solid transparent;
-            border-radius: 8px;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            position: relative;
-        }
-        
-        .option-item:hover {
-            background: var(--vscode-list-hoverBackground);
-            border-color: var(--vscode-list-hoverBackground);
-            transform: translateX(4px);
-        }
-        
-        .option-item.selected {
-            background: var(--vscode-list-activeSelectionBackground);
-            border-color: var(--vscode-focusBorder);
-        }
-        
-        .option-item.selected::before {
-            content: '✓';
-            position: absolute;
-            left: -25px;
-            color: var(--vscode-terminal-ansiGreen);
-            font-weight: bold;
-        }
-        
-        .option-checkbox {
-            margin-right: 12px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-        
-        .option-text {
-            flex: 1;
-            font-size: 14px;
-            line-height: 1.5;
-        }
-        
-        .option-index {
-            display: inline-block;
-            width: 24px;
-            height: 24px;
-            background: var(--vscode-badge-background);
-            color: var(--vscode-badge-foreground);
-            border-radius: 50%;
-            text-align: center;
-            line-height: 24px;
-            font-size: 12px;
-            font-weight: 600;
-            margin-right: 12px;
-        }
-        
-        .custom-input-section {
-            background: var(--vscode-input-background);
-            border-radius: 12px;
-            padding: 20px;
-            margin-top: 25px;
-            border: 1px solid var(--vscode-panel-border);
-        }
-        
-        .custom-input-label {
-            display: block;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: var(--vscode-input-foreground);
-        }
-        
-        .custom-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid var(--vscode-input-border);
-            border-radius: 6px;
-            background: var(--vscode-editor-background);
-            color: var(--vscode-input-foreground);
-            font-size: 14px;
-            transition: all 0.2s ease;
-        }
-        
-        .custom-input:focus {
-            outline: none;
-            border-color: var(--vscode-focusBorder);
-            box-shadow: 0 0 0 2px var(--vscode-focusBorder);
-        }
-        
-        .button-container {
-            display: flex;
-            gap: 12px;
-            justify-content: flex-end;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 1px solid var(--vscode-panel-border);
-        }
-        
-        .btn {
-            padding: 10px 24px;
-            border: none;
-            border-radius: 6px;
-            font-size: 14px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: all 0.2s ease;
-            min-width: 100px;
-        }
-        
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
-        
-        .btn-primary {
-            background: var(--vscode-button-background);
-            color: var(--vscode-button-foreground);
-        }
-        
-        .btn-primary:hover:not(:disabled) {
-            background: var(--vscode-button-hoverBackground);
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-        }
-        
-        .btn-secondary {
-            background: transparent;
-            color: var(--vscode-button-secondaryForeground);
-            border: 1px solid var(--vscode-button-border);
-        }
-        
-        .btn-secondary:hover:not(:disabled) {
-            background: var(--vscode-button-secondaryHoverBackground);
-        }
-        
+        /* Additional styles for selection */
         .selected-summary {
-            padding: 12px;
+            padding: var(--spacing-md);
             background: var(--vscode-textCodeBlock-background);
-            border-radius: 8px;
-            margin-top: 15px;
+            border-radius: var(--radius-md);
+            margin-top: var(--spacing-md);
             font-size: 13px;
-            color: var(--vscode-descriptionForeground);
-        }
-        
-        @media (max-width: 900px) {
-            .main-content {
-                grid-template-columns: 1fr;
-            }
-            
-            .options-panel {
-                max-height: none;
-            }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-icon">🎯</div>
-            <div class="header-content">
-                <h1>GitHub Copilot Selection</h1>
-                <div class="subtitle">Select the best option to proceed</div>
+    <div class="dialog-container">
+        <div class="dialog-header">
+            <div class="dialog-header-icon">🎯</div>
+            <h1 class="dialog-header-title">GitHub Copilot Selection</h1>
+        </div>
+        
+        <div class="question-section">
+            <div class="question-content" id="questionContent">
+                <!-- Question will be loaded here -->
             </div>
         </div>
         
-        <div class="main-content">
-            <div class="left-section">
-                <div class="question-panel">
-                    <div class="question-content" id="questionContent"></div>
-                    
-                    <div id="contextSection" class="context-section" style="display: none;">
-                        <div style="font-weight: 600; margin-bottom: 8px;">Context:</div>
-                        <div id="contextContent"></div>
-                    </div>
-                </div>
-                
-                <div class="custom-input-section">
-                    <label class="custom-input-label" for="customInput">
-                        Or provide a custom response:
-                    </label>
-                    <input 
-                        type="text" 
-                        id="customInput" 
-                        class="custom-input" 
-                        placeholder="Type your custom answer..."
-                    />
-                </div>
-                
-                <div id="selectedSummary" class="selected-summary" style="display: none;">
-                    <strong>Selected:</strong> <span id="selectedText"></span>
-                </div>
-                
-                <div class="button-container">
-                    <button class="btn btn-secondary" onclick="cancel()">Cancel</button>
-                    <button class="btn btn-primary" onclick="submit()" id="submitBtn">Submit</button>
-                </div>
+        <div id="contextSection" class="context-section" style="display: none;">
+            <div id="contextContent"></div>
+        </div>
+        
+        <div class="options-section">
+            <div id="optionsContainer" class="options-list"></div>
+        </div>
+        
+        <div id="selectedSummary" class="selected-summary" style="display: none;">
+            <strong>Selected:</strong> <span id="selectedText"></span>
+        </div>
+        
+        <div class="answer-section">
+            <div class="answer-header">
+                <span style="font-weight: 500; font-size: 13px;">Or provide a custom response:</span>
+            </div>
+            <textarea 
+                id="customInput" 
+                class="answer-input" 
+                placeholder="Type your custom answer... (Paste images with Ctrl+V)"
+                style="min-height: 80px;"
+            ></textarea>
+        </div>
+        
+        ${getAttachmentsSection()}
+        
+        <div class="button-container">
+            <div class="button-group">
+                <button class="btn btn-danger" onclick="cancel()">Cancel</button>
             </div>
             
-            <div class="options-panel">
-                <div class="options-title">
-                    <span>Available Options</span>
-                    <span id="optionCount" style="font-size: 12px; color: var(--vscode-descriptionForeground);"></span>
-                </div>
-                <div id="optionsContainer"></div>
+            <div class="button-group">
+                <button class="btn btn-primary" onclick="submit()" id="submitBtn" disabled>Submit</button>
             </div>
         </div>
+        
+        ${getKeyboardHints()}
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
-        const vscode = acquireVsCodeApi();
+        ${getBaseScript()}
+        
         const customInput = document.getElementById('customInput');
         const submitBtn = document.getElementById('submitBtn');
         const questionContent = document.getElementById('questionContent');
@@ -334,7 +84,6 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
         const contextContent = document.getElementById('contextContent');
         const selectedSummary = document.getElementById('selectedSummary');
         const selectedText = document.getElementById('selectedText');
-        const optionCount = document.getElementById('optionCount');
         
         let multiSelect = false;
         let selectedOptions = new Set();
@@ -345,24 +94,17 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
             const message = event.data;
             
             if (message.command === 'setData') {
-                // Render question
                 questionContent.innerHTML = marked.parse(message.question || '');
                 
-                // Show context if provided
                 if (message.context) {
                     contextContent.innerHTML = marked.parse(message.context);
                     contextSection.style.display = 'block';
                 }
                 
-                // Set multi-select mode
                 multiSelect = message.multiSelect || false;
                 defaultSelection = message.defaultSelection;
                 
-                // Render options
                 renderOptions(message.options || []);
-                
-                // Update option count
-                optionCount.textContent = '(' + (message.options?.length || 0) + ' options)';
             }
         });
         
@@ -380,6 +122,7 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                     selectedOptions.add(option);
                 }
                 
+                // Checkbox for multi-select
                 if (multiSelect) {
                     const checkbox = document.createElement('input');
                     checkbox.type = 'checkbox';
@@ -388,11 +131,13 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                     optionDiv.appendChild(checkbox);
                 }
                 
+                // Index badge
                 const indexSpan = document.createElement('span');
                 indexSpan.className = 'option-index';
                 indexSpan.textContent = (index + 1).toString();
                 optionDiv.appendChild(indexSpan);
                 
+                // Option text
                 const textSpan = document.createElement('span');
                 textSpan.className = 'option-text';
                 textSpan.textContent = option;
@@ -402,6 +147,9 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                 
                 optionsContainer.appendChild(optionDiv);
             });
+            
+            updateSelectedSummary();
+            updateButtonState();
         }
         
         function selectOption(element, value) {
@@ -417,7 +165,7 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                     element.classList.remove('selected');
                 }
             } else {
-                // Single select - clear previous selection
+                // Single select - clear previous
                 document.querySelectorAll('.option-item').forEach(el => {
                     el.classList.remove('selected');
                 });
@@ -456,10 +204,15 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                     : Array.from(selectedOptions)[0];
             }
             
-            if (result) {
+            if (result || attachments.length > 0) {
                 vscode.postMessage({
                     command: 'submit',
-                    text: result
+                    text: result || '[Attachments only]',
+                    attachments: attachments.map(a => ({
+                        data: a.data,
+                        mimeType: a.mimeType,
+                        name: a.name
+                    }))
                 });
             }
         }
@@ -470,11 +223,13 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
         
         // Keyboard navigation
         document.addEventListener('keydown', (e) => {
-            if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
+            if (e.ctrlKey && e.key === 'Enter') {
+                e.preventDefault();
                 submit();
-            } else if (e.key === 'Escape') {
+            } else if (e.key === 'Escape' && !document.getElementById('previewModal').classList.contains('visible')) {
+                e.preventDefault();
                 cancel();
-            } else if (e.key >= '1' && e.key <= '9' && !customInput.matches(':focus')) {
+            } else if (e.key >= '1' && e.key <= '9' && document.activeElement !== customInput) {
                 const index = parseInt(e.key) - 1;
                 const option = document.querySelector('[data-index="' + index + '"]');
                 if (option) {
@@ -483,15 +238,10 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
             }
         });
         
-        // Update button state on custom input
         customInput.addEventListener('input', updateButtonState);
         
-        // Send ready message
         vscode.postMessage({ command: 'ready' });
-        
-        // Initial button state
         updateButtonState();
     </script>
 </body>
 </html>`;
-
