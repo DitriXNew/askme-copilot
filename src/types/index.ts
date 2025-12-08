@@ -41,6 +41,12 @@ export interface IConfirmActionParameters {
 export interface IReadImageParameters {
     filePath: string;
     description?: string;
+    /** Quality 1-100. 100 = no compression (default), lower = more compression */
+    quality?: number;
+    /** Max width in pixels. Image will be resized if larger */
+    maxWidth?: number;
+    /** Max height in pixels. Image will be resized if larger */
+    maxHeight?: number;
 }
 
 export type Priority = 'low' | 'normal' | 'high' | 'critical';

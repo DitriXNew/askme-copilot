@@ -2,7 +2,7 @@
   "name": "ask-me-copilot-tool",
   "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
   "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
-  "version": "1.4.0",
+  "version": "1.5.0",
   "publisher": "DitriX",
   "author": {
     "name": "DitriX",
@@ -137,6 +137,11 @@
             "error"
           ],
           "description": "Logging level for debugging"
+        },
+        "askMeCopilot.disableImageCompression": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable image compression completely. When enabled (true), all images will be returned at their original size regardless of compression parameters (quality, maxWidth, maxHeight). Useful if you want to always preserve original image quality or if compression causes issues."
         }
       }
     },
@@ -287,7 +292,7 @@
         "name": "ask-me-copilot-tool_readImage",
         "displayName": "🖼️ Read Image",
         "userDescription": "Read and analyze an image file from the workspace",
-        "modelDescription": "Use this tool to read and analyze image files from the user's project. This is useful for: 1) Analyzing UI mockups and implementing designs, 2) Reading architecture diagrams or flowcharts, 3) Viewing screenshots for debugging visual issues, 4) Inspecting icons, logos, or graphics in the project, 5) Understanding visual assets before making changes. Provide the file path (relative to workspace or absolute) and optionally describe what you're looking for.",
+        "modelDescription": "Use this tool to read and analyze image files from the user's project. Supports image compression to reduce context size. Use cases: 1) Analyzing UI mockups to implement designs, 2) Reading architecture diagrams or flowcharts, 3) Viewing screenshots for debugging, 4) Inspecting icons, logos, graphics. COMPRESSION OPTIONS: Use 'quality' (1-100, default 100) to compress - lower = smaller file. Use 'maxWidth'/'maxHeight' to resize large images. Example: {filePath: 'mockup.png', quality: 50, maxWidth: 800} - compresses to 50% quality and max 800px wide. Compression can be disabled in settings.",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "image",
         "icon": "$(file-media)",
@@ -301,6 +306,22 @@
             "description": {
               "type": "string",
               "description": "Optional description of what you're looking for in the image or why you need to see it"
+            },
+            "quality": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Image quality 1-100. 100 = original quality (no compression), lower values = more compression. Default: 100 (no compression). Use 50-80 for good balance of quality and size."
+            },
+            "maxWidth": {
+              "type": "number",
+              "minimum": 1,
+              "description": "Maximum width in pixels. If image is wider, it will be proportionally resized. Useful for large screenshots/mockups."
+            },
+            "maxHeight": {
+              "type": "number",
+              "minimum": 1,
+              "description": "Maximum height in pixels. If image is taller, it will be proportionally resized. Useful for long screenshots."
             }
           },
           "required": [
@@ -346,6 +367,7 @@
     "release:major": "npm version major && npm run package"
   },
   "devDependencies": {
+    "@types/jimp": "^0.2.28",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.5.2",
     "@types/sinon": "^17.0.4",
@@ -361,5 +383,8 @@
     "rimraf": "^6.0.1",
     "sinon": "^21.0.0",
     "typescript": "^5.9.2"
+  },
+  "dependencies": {
+    "jimp": "^1.6.0"
   }
 }

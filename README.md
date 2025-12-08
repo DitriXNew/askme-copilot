@@ -30,13 +30,34 @@ This extension adds **5 tools** for Copilot to communicate with you:
 | ⚠️ **Confirm Action** | Before deletions, schema changes, breaking changes |
 | 🖼️ **Read Image** | Analyze mockups, diagrams, icons in your project |
 
-### 🖼️ Read Image Tool (NEW in v1.4.0)
+### 🖼️ Read Image Tool (v1.5.0)
 
-Copilot can now **analyze images from your project files**:
+Copilot can **analyze images from your project** with optional compression:
+
+**Use cases:**
 - UI mockups → implement designs
 - Architecture diagrams → understand system
 - Screenshots → debug visual issues
 - Icons/logos → inspect graphics
+
+**Compression options** (to save context space):
+```javascript
+// Original image (no compression)
+readImage({ filePath: "mockup.png" })
+
+// Compress to 50% quality, max 800px wide
+readImage({ filePath: "screenshot.png", quality: 50, maxWidth: 800 })
+
+// Just resize, keep quality
+readImage({ filePath: "diagram.png", maxWidth: 1200, maxHeight: 800 })
+```
+
+| Parameter | Description |
+|-----------|-------------|
+| `filePath` | Path to image (relative or absolute) |
+| `quality` | 1-100 (100 = no compression, lower = smaller file) |
+| `maxWidth` | Resize if image wider than this |
+| `maxHeight` | Resize if image taller than this |
 
 ## Quick Start
 
@@ -70,6 +91,7 @@ At end of work, ask expert for confirmation.
 | `responseTimeout` | `0` | 0 = wait indefinitely |
 | `enableResponseCache` | `true` | Cache identical questions |
 | `cacheTimeToLive` | `300000` | Cache duration (5 min) |
+| `disableImageCompression` | `false` | Disable all image compression |
 
 ## Commands
 

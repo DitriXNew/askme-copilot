@@ -10,13 +10,66 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
     <style>
         ${getBaseStyles()}
         
-        /* Additional styles for selection */
+        /* Two-column layout */
+        .dialog-container {
+            max-width: 1100px;
+        }
+        
+        .main-content {
+            display: grid;
+            grid-template-columns: 1fr 350px;
+            gap: var(--spacing-lg);
+            margin-top: var(--spacing-md);
+        }
+        
+        .left-panel {
+            display: flex;
+            flex-direction: column;
+            gap: var(--spacing-md);
+        }
+        
+        .right-panel {
+            background: var(--vscode-sideBar-background);
+            border-radius: var(--radius-md);
+            padding: var(--spacing-md);
+            border: 1px solid var(--vscode-panel-border);
+            max-height: calc(100vh - 200px);
+            overflow-y: auto;
+        }
+        
+        .options-header {
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: var(--spacing-md);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            color: var(--vscode-foreground);
+        }
+        
+        .mode-badge {
+            font-size: 11px;
+            padding: 2px 8px;
+            background: var(--vscode-badge-background);
+            color: var(--vscode-badge-foreground);
+            border-radius: 10px;
+            font-weight: normal;
+        }
+        
         .selected-summary {
             padding: var(--spacing-md);
             background: var(--vscode-textCodeBlock-background);
             border-radius: var(--radius-md);
-            margin-top: var(--spacing-md);
             font-size: 13px;
+        }
+        
+        @media (max-width: 900px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+            .right-panel {
+                max-height: none;
+            }
         }
     </style>
 </head>
@@ -27,37 +80,45 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
             <h1 class="dialog-header-title">GitHub Copilot Selection</h1>
         </div>
         
-        <div class="question-section">
-            <div class="question-content" id="questionContent">
-                <!-- Question will be loaded here -->
+        <div class="main-content">
+            <div class="left-panel">
+                <div class="question-section">
+                    <div class="question-content" id="questionContent">
+                        <!-- Question will be loaded here -->
+                    </div>
+                </div>
+                
+                <div id="contextSection" class="context-section" style="display: none;">
+                    <div id="contextContent"></div>
+                </div>
+                
+                <div id="selectedSummary" class="selected-summary" style="display: none;">
+                    <strong>Selected:</strong> <span id="selectedText"></span>
+                </div>
+                
+                <div class="answer-section">
+                    <div class="answer-header">
+                        <span style="font-weight: 500; font-size: 13px;">Or provide a custom response:</span>
+                    </div>
+                    <textarea 
+                        id="customInput" 
+                        class="answer-input" 
+                        placeholder="Type your custom answer... (Paste images with Ctrl+V)"
+                        style="min-height: 80px;"
+                    ></textarea>
+                </div>
+                
+                ${getAttachmentsSection()}
+            </div>
+            
+            <div class="right-panel">
+                <div class="options-header">
+                    <span>Available Options</span>
+                    <span id="modeIndicator" class="mode-badge">Single</span>
+                </div>
+                <div id="optionsContainer" class="options-list"></div>
             </div>
         </div>
-        
-        <div id="contextSection" class="context-section" style="display: none;">
-            <div id="contextContent"></div>
-        </div>
-        
-        <div class="options-section">
-            <div id="optionsContainer" class="options-list"></div>
-        </div>
-        
-        <div id="selectedSummary" class="selected-summary" style="display: none;">
-            <strong>Selected:</strong> <span id="selectedText"></span>
-        </div>
-        
-        <div class="answer-section">
-            <div class="answer-header">
-                <span style="font-weight: 500; font-size: 13px;">Or provide a custom response:</span>
-            </div>
-            <textarea 
-                id="customInput" 
-                class="answer-input" 
-                placeholder="Type your custom answer... (Paste images with Ctrl+V)"
-                style="min-height: 80px;"
-            ></textarea>
-        </div>
-        
-        ${getAttachmentsSection()}
         
         <div class="button-container">
             <div class="button-group">
@@ -84,6 +145,7 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
         const contextContent = document.getElementById('contextContent');
         const selectedSummary = document.getElementById('selectedSummary');
         const selectedText = document.getElementById('selectedText');
+        const modeIndicator = document.getElementById('modeIndicator');
         
         let multiSelect = false;
         let selectedOptions = new Set();
@@ -103,6 +165,9 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                 
                 multiSelect = message.multiSelect || false;
                 defaultSelection = message.defaultSelection;
+                
+                // Update mode indicator
+                modeIndicator.textContent = multiSelect ? 'Multi-select' : 'Single';
                 
                 renderOptions(message.options || []);
             }

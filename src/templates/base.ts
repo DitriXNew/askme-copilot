@@ -776,6 +776,40 @@ export const getBaseScript = () => `
             dropZone.addEventListener('drop', handleDrop);
         }
         
+        // Global drag-drop on entire document (prevent VS Code from intercepting)
+        document.body.addEventListener('dragover', (e) => {
+            if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
+                e.preventDefault();
+                e.stopPropagation();
+                const dz = document.getElementById('dropZone');
+                if (dz) dz.classList.add('drag-over');
+            }
+        }, true);
+        
+        document.body.addEventListener('dragleave', (e) => {
+            // Only remove highlight if leaving the body entirely
+            if (e.relatedTarget === null || !document.body.contains(e.relatedTarget)) {
+                const dz = document.getElementById('dropZone');
+                if (dz) dz.classList.remove('drag-over');
+            }
+        }, true);
+        
+        document.body.addEventListener('drop', (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            const dz = document.getElementById('dropZone');
+            if (dz) dz.classList.remove('drag-over');
+            
+            if (e.dataTransfer && e.dataTransfer.files) {
+                const files = Array.from(e.dataTransfer.files);
+                files.forEach(file => {
+                    if (file.type.startsWith('image/')) {
+                        processFile(file);
+                    }
+                });
+            }
+        }, true);
+        
         updateAttachmentCount();
     });
     

@@ -2,9 +2,10 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
+import { Jimp } from 'jimp';
 import { BaseTool } from './baseTool';
 import { IReadImageParameters } from '../types';
-import { getLogger } from '../utils';
+import { getLogger, ConfigurationManager } from '../utils';
 
 export class ReadImageTool extends BaseTool<IReadImageParameters> {
     async invoke(
@@ -16,7 +17,7 @@ export class ReadImageTool extends BaseTool<IReadImageParameters> {
             return this.createErrorResult(validationError);
         }
         
-        const { filePath, description } = options.input;
+        const { filePath, description, quality, maxWidth, maxHeight } = options.input;
         
         if (token.isCancellationRequested) {
             return this.createCancelResult();
@@ -41,7 +42,6 @@ export class ReadImageTool extends BaseTool<IReadImageParameters> {
             
             // Read file
             const fileBuffer = fs.readFileSync(resolvedPath);
-            const bytes = new Uint8Array(fileBuffer);
             
             // Determine MIME type from extension
             const ext = path.extname(resolvedPath).toLowerCase();
@@ -61,19 +61,85 @@ export class ReadImageTool extends BaseTool<IReadImageParameters> {
                 return this.createErrorResult(`Unsupported image format: ${ext}. Supported: ${Object.keys(mimeTypes).join(', ')}`);
             }
             
-            // Check file size (max 5MB)
-            if (bytes.length > 5 * 1024 * 1024) {
-                return this.createErrorResult(`File too large: ${(bytes.length / 1024 / 1024).toFixed(2)}MB. Maximum: 5MB`);
+            // Check file size (max 10MB for original)
+            if (fileBuffer.length > 10 * 1024 * 1024) {
+                return this.createErrorResult(`File too large: ${(fileBuffer.length / 1024 / 1024).toFixed(2)}MB. Maximum: 10MB`);
             }
             
-            getLogger().info(`Reading image: ${resolvedPath} (${mimeType}, ${bytes.length} bytes)`);
+            let finalBytes: Uint8Array;
+            let finalMimeType = mimeType;
+            let compressionInfo = '';
+            
+            // Check if compression is disabled globally
+            const disableCompression = ConfigurationManager.disableImageCompression;
+            const needsProcessing = !disableCompression && (
+                (quality !== undefined && quality < 100) ||
+                maxWidth !== undefined ||
+                maxHeight !== undefined
+            );
+            
+            if (needsProcessing && !mimeType.includes('svg') && !mimeType.includes('gif')) {
+                try {
+                    // Process image with Jimp
+                    const image = await Jimp.read(fileBuffer);
+                    const originalWidth = image.width;
+                    const originalHeight = image.height;
+                    
+                    // Resize if needed
+                    let resized = false;
+                    if (maxWidth || maxHeight) {
+                        // Calculate proportional resize
+                        let newWidth = originalWidth;
+                        let newHeight = originalHeight;
+                        
+                        if (maxWidth && originalWidth > maxWidth) {
+                            newWidth = maxWidth;
+                            newHeight = Math.round(originalHeight * (maxWidth / originalWidth));
+                        }
+                        
+                        if (maxHeight && newHeight > maxHeight) {
+                            newHeight = maxHeight;
+                            newWidth = Math.round(newWidth * (maxHeight / newHeight));
+                        }
+                        
+                        // Only resize if dimensions changed
+                        if (newWidth !== originalWidth || newHeight !== originalHeight) {
+                            image.resize({ w: newWidth, h: newHeight });
+                            resized = true;
+                        }
+                    }
+                    
+                    // Set quality and get buffer
+                    const finalQuality = quality !== undefined ? Math.max(1, Math.min(100, quality)) : 80;
+                    
+                    // Convert to PNG with quality
+                    const processedBuffer = await image.getBuffer('image/png', { quality: finalQuality });
+                    finalBytes = new Uint8Array(processedBuffer);
+                    finalMimeType = 'image/png';
+                    
+                    compressionInfo = `\nCompressed: ${resized ? `${originalWidth}x${originalHeight} → ${image.width}x${image.height}, ` : ''}quality=${finalQuality}%, ${(fileBuffer.length / 1024).toFixed(1)}KB → ${(finalBytes.length / 1024).toFixed(1)}KB`;
+                    
+                    getLogger().info(`Image compressed: ${resolvedPath}${compressionInfo}`);
+                } catch (compressError) {
+                    getLogger().warn(`Image compression failed, using original: ${compressError}`);
+                    finalBytes = new Uint8Array(fileBuffer);
+                }
+            } else {
+                // No compression - use original
+                finalBytes = new Uint8Array(fileBuffer);
+                if (disableCompression && (quality !== undefined || maxWidth !== undefined || maxHeight !== undefined)) {
+                    compressionInfo = '\n(Compression disabled in settings)';
+                }
+            }
+            
+            getLogger().info(`Reading image: ${resolvedPath} (${finalMimeType}, ${finalBytes.length} bytes)`);
             
             // Build result with text description and image
             const resultParts: (vscode.LanguageModelTextPart | vscode.LanguageModelDataPart)[] = [
                 new vscode.LanguageModelTextPart(
-                    `Image loaded from: ${path.basename(resolvedPath)}${description ? `\nDescription: ${description}` : ''}\nSize: ${(bytes.length / 1024).toFixed(1)}KB, Type: ${mimeType}`
+                    `Image loaded from: ${path.basename(resolvedPath)}${description ? `\nDescription: ${description}` : ''}\nSize: ${(finalBytes.length / 1024).toFixed(1)}KB, Type: ${finalMimeType}${compressionInfo}`
                 ),
-                vscode.LanguageModelDataPart.image(bytes, mimeType)
+                vscode.LanguageModelDataPart.image(finalBytes, finalMimeType)
             ];
             
             return new vscode.LanguageModelToolResult(resultParts);
@@ -87,11 +153,17 @@ export class ReadImageTool extends BaseTool<IReadImageParameters> {
         options: vscode.LanguageModelToolInvocationPrepareOptions<IReadImageParameters>,
         _token: vscode.CancellationToken
     ): vscode.PreparedToolInvocation {
+        const { filePath, description, quality, maxWidth, maxHeight } = options.input;
+        const compressionParams = [];
+        if (quality !== undefined) compressionParams.push(`quality=${quality}%`);
+        if (maxWidth !== undefined) compressionParams.push(`maxW=${maxWidth}`);
+        if (maxHeight !== undefined) compressionParams.push(`maxH=${maxHeight}`);
+        
         return {
-            invocationMessage: `🖼️ Reading image: ${options.input.filePath}`,
+            invocationMessage: `🖼️ Reading image: ${filePath}${compressionParams.length ? ` (${compressionParams.join(', ')})` : ''}`,
             confirmationMessages: {
                 title: 'Read Image File',
-                message: new vscode.MarkdownString(`**File:** ${options.input.filePath}${options.input.description ? `\n**Purpose:** ${options.input.description}` : ''}`)
+                message: new vscode.MarkdownString(`**File:** ${filePath}${description ? `\n**Purpose:** ${description}` : ''}${compressionParams.length ? `\n**Compression:** ${compressionParams.join(', ')}` : ''}`)
             }
         };
     }

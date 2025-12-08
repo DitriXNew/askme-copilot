@@ -28,4 +28,8 @@ export class ConfigurationManager {
     static get cacheTimeToLive(): number {
         return vscode.workspace.getConfiguration(this.SECTION).get('cacheTimeToLive', 5 * 60 * 1000);
     }
+    
+    static get disableImageCompression(): boolean {
+        return vscode.workspace.getConfiguration(this.SECTION).get('disableImageCompression', false);
+    }
 }
