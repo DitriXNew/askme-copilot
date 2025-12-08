@@ -307,7 +307,7 @@ export const getBaseStyles = () => `
         gap: var(--spacing-sm);
     }
     
-    .drop-zone-card {
+    .add-file-card {
         border: 2px dashed var(--vscode-input-border);
         border-radius: var(--radius-sm);
         padding: var(--spacing-sm);
@@ -323,23 +323,17 @@ export const getBaseStyles = () => `
         transition: all var(--animation-duration) var(--animation-easing);
     }
     
-    .drop-zone-card:hover {
+    .add-file-card:hover {
         border-color: var(--vscode-focusBorder);
         background: var(--vscode-textCodeBlock-background);
     }
     
-    .drop-zone-card.drag-over {
-        border-color: var(--vscode-textLink-foreground);
-        background: var(--vscode-textBlockQuote-background);
-        transform: scale(1.02);
-    }
-    
-    .drop-zone-icon {
+    .add-file-icon {
         font-size: 24px;
         color: var(--vscode-descriptionForeground);
     }
     
-    .drop-zone-text {
+    .add-file-text {
         color: var(--vscode-descriptionForeground);
         font-size: 11px;
         font-weight: 500;
@@ -393,6 +387,34 @@ export const getBaseStyles = () => `
         background: var(--vscode-editorError-foreground);
     }
     
+    /* File item (non-image) */
+    .file-item {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 1;
+        padding: var(--spacing-sm);
+    }
+    
+    .file-icon {
+        font-size: 28px;
+        margin-bottom: var(--spacing-xs);
+    }
+    
+    .file-name {
+        font-size: 10px;
+        color: var(--vscode-descriptionForeground);
+        text-align: center;
+        word-break: break-all;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        max-height: 2.4em;
+    }
+
     /* Preview Modal */
     .preview-modal {
         position: fixed;
@@ -637,34 +659,40 @@ export const getBaseScript = () => `
         const grid = document.getElementById('attachmentsGrid');
         if (!grid) return;
         
-        const dropZoneCard = \`
-            <div class="drop-zone-card" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                <span class="drop-zone-icon">+</span>
-                <span class="drop-zone-text">Add</span>
+        const addFileCard = \`
+            <div class="add-file-card" onclick="document.getElementById('fileInput').click()">
+                <span class="add-file-icon">+</span>
+                <span class="add-file-text">Add</span>
             </div>
         \`;
         
-        const attachmentCards = attachments.map(att => \`
-            <div class="attachment-item" data-id="\${att.id}">
-                <img 
-                    src="\${att.preview}" 
-                    alt="\${att.name}" 
-                    class="attachment-preview"
-                    onclick="openPreview('\${att.preview}')"
-                >
-                <button class="attachment-remove" onclick="removeAttachment('\${att.id}')" title="Remove">✕</button>
-            </div>
-        \`).join('');
+        const attachmentCards = attachments.map(att => {
+            if (att.isFilePath) {
+                // File path attachment (non-image)
+                return \`
+                    <div class="attachment-item file-item" data-id="\${att.id}" title="\${att.filePath || att.name}">
+                        <div class="file-icon">📄</div>
+                        <div class="file-name">\${att.name}</div>
+                        <button class="attachment-remove" onclick="removeAttachment('\${att.id}')" title="Remove">✕</button>
+                    </div>
+                \`;
+            } else {
+                // Image attachment with preview
+                return \`
+                    <div class="attachment-item" data-id="\${att.id}">
+                        <img 
+                            src="\${att.preview}" 
+                            alt="\${att.name}" 
+                            class="attachment-preview"
+                            onclick="openPreview('\${att.preview}')"
+                        >
+                        <button class="attachment-remove" onclick="removeAttachment('\${att.id}')" title="Remove">✕</button>
+                    </div>
+                \`;
+            }
+        }).join('');
         
-        grid.innerHTML = dropZoneCard + attachmentCards;
-        
-        // Re-attach event listeners
-        const newDropZone = document.getElementById('dropZone');
-        if (newDropZone) {
-            newDropZone.addEventListener('dragover', handleDragOver);
-            newDropZone.addEventListener('dragleave', handleDragLeave);
-            newDropZone.addEventListener('drop', handleDrop);
-        }
+        grid.innerHTML = addFileCard + attachmentCards;
     }
     
     function removeAttachment(id) {
@@ -673,6 +701,42 @@ export const getBaseScript = () => `
         updateAttachmentCount();
     }
     
+    // Add file attachment by path (for non-images)
+    function addFileAttachment(filePath, fileName) {
+        const attachment = {
+            id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            data: null,  // No data for file paths
+            mimeType: 'application/octet-stream',
+            name: fileName || filePath.split('/').pop() || filePath.split('\\\\').pop(),
+            preview: null,
+            filePath: filePath,
+            isFilePath: true
+        };
+        
+        attachments.push(attachment);
+        renderAttachments();
+        updateAttachmentCount();
+        showToast('Attached: ' + attachment.name, 'success');
+    }
+    
+    // Add image attachment with preview
+    function addImageAttachment(data, mimeType, name, filePath) {
+        const attachment = {
+            id: Date.now() + '-' + Math.random().toString(36).substr(2, 9),
+            data: data.includes(',') ? data.split(',')[1] : data,
+            mimeType: mimeType,
+            name: name,
+            preview: data.startsWith('data:') ? data : 'data:' + mimeType + ';base64,' + data,
+            filePath: filePath,
+            isFilePath: false
+        };
+        
+        attachments.push(attachment);
+        renderAttachments();
+        updateAttachmentCount();
+        showToast('Added: ' + attachment.name, 'success');
+    }
+
     function openPreview(src) {
         const modal = document.getElementById('previewModal');
         const img = document.getElementById('previewImage');
@@ -712,31 +776,6 @@ export const getBaseScript = () => `
         setTimeout(() => toast.remove(), 3000);
     }
     
-    function handleDragOver(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.add('drag-over');
-    }
-    
-    function handleDragLeave(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.remove('drag-over');
-    }
-    
-    function handleDrop(e) {
-        e.preventDefault();
-        e.stopPropagation();
-        e.currentTarget.classList.remove('drag-over');
-        
-        const files = Array.from(e.dataTransfer.files);
-        files.forEach(file => {
-            if (file.type.startsWith('image/')) {
-                processFile(file);
-            }
-        });
-    }
-    
     // Global paste handler
     document.addEventListener('paste', (e) => {
         if (!e.clipboardData || !e.clipboardData.items) return;
@@ -769,47 +808,6 @@ export const getBaseScript = () => `
             });
         }
         
-        const dropZone = document.getElementById('dropZone');
-        if (dropZone) {
-            dropZone.addEventListener('dragover', handleDragOver);
-            dropZone.addEventListener('dragleave', handleDragLeave);
-            dropZone.addEventListener('drop', handleDrop);
-        }
-        
-        // Global drag-drop on entire document (prevent VS Code from intercepting)
-        document.body.addEventListener('dragover', (e) => {
-            if (e.dataTransfer && e.dataTransfer.types.includes('Files')) {
-                e.preventDefault();
-                e.stopPropagation();
-                const dz = document.getElementById('dropZone');
-                if (dz) dz.classList.add('drag-over');
-            }
-        }, true);
-        
-        document.body.addEventListener('dragleave', (e) => {
-            // Only remove highlight if leaving the body entirely
-            if (e.relatedTarget === null || !document.body.contains(e.relatedTarget)) {
-                const dz = document.getElementById('dropZone');
-                if (dz) dz.classList.remove('drag-over');
-            }
-        }, true);
-        
-        document.body.addEventListener('drop', (e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            const dz = document.getElementById('dropZone');
-            if (dz) dz.classList.remove('drag-over');
-            
-            if (e.dataTransfer && e.dataTransfer.files) {
-                const files = Array.from(e.dataTransfer.files);
-                files.forEach(file => {
-                    if (file.type.startsWith('image/')) {
-                        processFile(file);
-                    }
-                });
-            }
-        }, true);
-        
         updateAttachmentCount();
     });
     
@@ -831,12 +829,12 @@ export const getAttachmentsSection = () => `
             📎 Attachments <span class="attachment-count" id="attachmentCount">(0)</span>
         </div>
         
-        <input type="file" id="fileInput" class="hidden-input" multiple accept="image/*">
+        <input type="file" id="fileInput" class="hidden-input" multiple>
         
         <div class="attachments-grid" id="attachmentsGrid">
-            <div class="drop-zone-card" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                <span class="drop-zone-icon">+</span>
-                <span class="drop-zone-text">Add</span>
+            <div class="add-file-card" onclick="document.getElementById('fileInput').click()">
+                <span class="add-file-icon">+</span>
+                <span class="add-file-text">Add</span>
             </div>
         </div>
     </div>

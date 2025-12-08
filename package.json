@@ -2,7 +2,7 @@
   "name": "ask-me-copilot-tool",
   "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
   "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
-  "version": "1.5.0",
+  "version": "1.5.1",
   "publisher": "DitriX",
   "author": {
     "name": "DitriX",
@@ -60,7 +60,7 @@
     "url": "https://github.com/DitriXNew/askme-copilot/issues"
   },
   "license": "MIT",
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -332,8 +332,11 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run bundle:production",
     "compile": "tsc -p ./",
+    "bundle": "node esbuild.js",
+    "bundle:production": "node esbuild.js --production",
+    "bundle:watch": "node esbuild.js --watch",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
@@ -367,7 +370,6 @@
     "release:major": "npm version major && npm run package"
   },
   "devDependencies": {
-    "@types/jimp": "^0.2.28",
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.5.2",
     "@types/sinon": "^17.0.4",
@@ -378,6 +380,7 @@
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
     "c8": "^10.1.3",
+    "esbuild": "^0.27.1",
     "eslint": "^9.35.0",
     "mocha": "^11.7.2",
     "rimraf": "^6.0.1",

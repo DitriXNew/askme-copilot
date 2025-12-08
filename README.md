@@ -77,10 +77,10 @@ At end of work, ask expert for confirmation.
 
 ## Features
 
-### Image Attachments
-- **Drag & Drop** images into expert dialog
-- **Ctrl+V** to paste screenshots
-- Supported: PNG, JPEG, GIF, WebP, BMP (max 5MB)
+### File Attachments
+- **Click +** to add files to expert dialog
+- **Ctrl+V** to paste images from clipboard
+- Supports images (PNG, JPEG, GIF, WebP, BMP) and other file types
 
 ## Settings
 

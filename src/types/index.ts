@@ -28,9 +28,11 @@ export interface IExpertResponse {
 }
 
 export interface IAttachment {
-    data: string; // base64 encoded
+    data: string | null; // base64 encoded, null for file paths
     mimeType: string;
     name: string;
+    filePath?: string; // Path to file (for non-image attachments)
+    isFilePath?: boolean; // True if this is a file path reference, not image data
 }
 
 export interface IConfirmActionParameters {

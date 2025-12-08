@@ -2,10 +2,26 @@
 import * as vscode from 'vscode';
 import * as path from 'path';
 import * as fs from 'fs';
-import { Jimp } from 'jimp';
 import { BaseTool } from './baseTool';
 import { IReadImageParameters } from '../types';
 import { getLogger, ConfigurationManager } from '../utils';
+
+// Dynamic import for Jimp (optional dependency)
+let Jimp: any = null;
+
+async function loadJimp(): Promise<boolean> {
+    if (Jimp !== null) {
+        return Jimp !== false;
+    }
+    try {
+        const jimpModule = await import('jimp');
+        Jimp = jimpModule.Jimp;
+        return true;
+    } catch {
+        Jimp = false;
+        return false;
+    }
+}
 
 export class ReadImageTool extends BaseTool<IReadImageParameters> {
     async invoke(
@@ -78,7 +94,10 @@ export class ReadImageTool extends BaseTool<IReadImageParameters> {
                 maxHeight !== undefined
             );
             
-            if (needsProcessing && !mimeType.includes('svg') && !mimeType.includes('gif')) {
+            // Try to load Jimp for compression
+            const jimpAvailable = needsProcessing ? await loadJimp() : false;
+            
+            if (needsProcessing && jimpAvailable && !mimeType.includes('svg') && !mimeType.includes('gif')) {
                 try {
                     // Process image with Jimp
                     const image = await Jimp.read(fileBuffer);
@@ -127,7 +146,9 @@ export class ReadImageTool extends BaseTool<IReadImageParameters> {
             } else {
                 // No compression - use original
                 finalBytes = new Uint8Array(fileBuffer);
-                if (disableCompression && (quality !== undefined || maxWidth !== undefined || maxHeight !== undefined)) {
+                if (needsProcessing && !jimpAvailable) {
+                    compressionInfo = '\n(Compression requested but jimp not available - using original)';
+                } else if (disableCompression && (quality !== undefined || maxWidth !== undefined || maxHeight !== undefined)) {
                     compressionInfo = '\n(Compression disabled in settings)';
                 }
             }
@@ -155,9 +176,9 @@ export class ReadImageTool extends BaseTool<IReadImageParameters> {
     ): vscode.PreparedToolInvocation {
         const { filePath, description, quality, maxWidth, maxHeight } = options.input;
         const compressionParams = [];
-        if (quality !== undefined) compressionParams.push(`quality=${quality}%`);
-        if (maxWidth !== undefined) compressionParams.push(`maxW=${maxWidth}`);
-        if (maxHeight !== undefined) compressionParams.push(`maxH=${maxHeight}`);
+        if (quality !== undefined) {compressionParams.push(`quality=${quality}%`);}
+        if (maxWidth !== undefined) {compressionParams.push(`maxW=${maxWidth}`);}
+        if (maxHeight !== undefined) {compressionParams.push(`maxH=${maxHeight}`);}
         
         return {
             invocationMessage: `🖼️ Reading image: ${filePath}${compressionParams.length ? ` (${compressionParams.join(', ')})` : ''}`,

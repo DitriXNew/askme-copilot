@@ -59,24 +59,49 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
                     new vscode.LanguageModelTextPart(textResponse)
                 ];
                 
-                // Add image attachments if any
+                // Add attachments if any
                 if (response.attachments && response.attachments.length > 0) {
+                    const fileAttachments: string[] = [];
+                    
                     for (const attachment of response.attachments) {
                         try {
-                            // Convert base64 to Uint8Array
-                            const binaryString = Buffer.from(attachment.data, 'base64');
-                            const bytes = new Uint8Array(binaryString);
-                            
-                            // Use LanguageModelDataPart.image for image attachments
-                            if (attachment.mimeType.startsWith('image/')) {
-                                resultParts.push(
-                                    vscode.LanguageModelDataPart.image(bytes, attachment.mimeType)
-                                );
-                                getLogger().info(`Added image attachment: ${attachment.name} (${attachment.mimeType})`);
+                            // Check if it's a file path attachment (non-image)
+                            if (attachment.isFilePath && attachment.filePath) {
+                                // Add file path info to text response
+                                let fileInfo = `\nAttached file: ${attachment.filePath}`;
+                                try {
+                                    const fs = await import('fs');
+                                    const stats = fs.statSync(attachment.filePath);
+                                    const sizeKB = (stats.size / 1024).toFixed(1);
+                                    fileInfo += ` (${sizeKB} KB)`;
+                                } catch {
+                                    // Ignore stat errors
+                                }
+                                fileAttachments.push(fileInfo);
+                                getLogger().info(`Added file path attachment: ${attachment.filePath}`);
+                            } else if (attachment.data) {
+                                // Image attachment with base64 data
+                                const binaryString = Buffer.from(attachment.data, 'base64');
+                                const bytes = new Uint8Array(binaryString);
+                                
+                                // Use LanguageModelDataPart.image for image attachments
+                                if (attachment.mimeType.startsWith('image/')) {
+                                    resultParts.push(
+                                        vscode.LanguageModelDataPart.image(bytes, attachment.mimeType)
+                                    );
+                                    getLogger().info(`Added image attachment: ${attachment.name} (${attachment.mimeType})`);
+                                }
                             }
                         } catch (err) {
                             getLogger().warn(`Failed to process attachment ${attachment.name}:`, err);
                         }
+                    }
+                    
+                    // Append file attachments info to text response
+                    if (fileAttachments.length > 0) {
+                        resultParts[0] = new vscode.LanguageModelTextPart(
+                            textResponse + fileAttachments.join('')
+                        );
                     }
                 }
                 
