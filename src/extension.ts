@@ -992,33 +992,25 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         .header {
             display: flex;
             align-items: center;
-            gap: 20px;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid var(--vscode-panel-border);
+            gap: 12px;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--vscode-panel-border);
         }
         
         .header-icon {
-            font-size: 48px;
-            animation: pulse 2s infinite;
-        }
-        
-        @keyframes pulse {
-            0%, 100% { transform: scale(1); }
-            50% { transform: scale(1.05); }
+            font-size: 20px;
         }
         
         .header-content h1 {
             margin: 0;
-            font-size: 28px;
+            font-size: 16px;
             font-weight: 600;
             color: var(--vscode-foreground);
         }
         
         .header-content .subtitle {
-            margin-top: 5px;
-            color: var(--vscode-descriptionForeground);
-            font-size: 14px;
+            display: none;
         }
         
         .context-badge {
@@ -1036,10 +1028,10 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
             background: linear-gradient(135deg, 
                 var(--vscode-textBlockQuote-background) 0%, 
                 var(--vscode-editor-background) 100%);
-            border-left: 4px solid var(--vscode-textLink-foreground);
-            border-radius: 8px;
-            padding: 20px;
-            margin-bottom: 25px;
+            border-left: 3px solid var(--vscode-textLink-foreground);
+            border-radius: 6px;
+            padding: 12px;
+            margin-bottom: 15px;
             position: relative;
             overflow: hidden;
         }
@@ -1063,12 +1055,7 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         }
         
         .question-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--vscode-textLink-foreground);
-            margin-bottom: 10px;
-            font-weight: 600;
+            display: none;
         }
         
         .question-content {
@@ -1109,12 +1096,7 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         }
         
         .context-label {
-            font-size: 12px;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-            color: var(--vscode-textPreformat-foreground);
-            margin-bottom: 8px;
-            font-weight: 600;
+            display: none;
         }
         
         .context-content {
@@ -1131,23 +1113,22 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         }
         
         .answer-section {
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
         
-        .answer-label {
+        .answer-header {
             display: flex;
             align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
             gap: 10px;
-            margin-bottom: 12px;
-            font-weight: 600;
-            color: var(--vscode-input-foreground);
         }
         
         .char-counter {
-            margin-left: auto;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--vscode-descriptionForeground);
             font-weight: normal;
+            white-space: nowrap;
         }
         
         .answer-input {
@@ -1179,9 +1160,9 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         
         .quick-actions {
             display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
+            gap: 6px;
             flex-wrap: wrap;
+            flex: 1;
         }
         
         .quick-action {
@@ -1311,69 +1292,71 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         
         /* Attachments Section Styles */
         .attachments-section {
-            margin-bottom: 20px;
+            margin-bottom: 15px;
         }
         
         .attachments-label {
             display: flex;
             align-items: center;
-            gap: 8px;
+            gap: 4px;
             margin-bottom: 8px;
-            font-weight: 600;
+            font-weight: 500;
             color: var(--vscode-input-foreground);
-            font-size: 14px;
+            font-size: 12px;
         }
         
         .attachment-count {
-            margin-left: auto;
-            font-size: 12px;
+            font-size: 11px;
             color: var(--vscode-descriptionForeground);
             font-weight: normal;
         }
         
         .drop-zone {
-            border: 2px dashed var(--vscode-input-border);
-            border-radius: 6px;
-            padding: 12px;
-            text-align: center;
-            transition: all 0.3s ease;
-            background: var(--vscode-input-background);
-            cursor: pointer;
-            position: relative;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8px;
-            min-height: 40px;
+            transition: all 0.2s ease;
         }
         
-        .drop-zone:hover {
+        .drop-zone-card {
+            border: 2px dashed var(--vscode-input-border);
+            border-radius: 4px;
+            padding: 8px;
+            text-align: center;
+            background: var(--vscode-input-background);
+            cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 4px;
+            aspect-ratio: 1;
+        }
+        
+        .drop-zone-card:hover {
             border-color: var(--vscode-focusBorder);
             background: var(--vscode-textCodeBlock-background);
         }
         
-        .drop-zone.drag-over {
+        .drop-zone.drag-over,
+        .drop-zone-card.drag-over {
             border-color: var(--vscode-textLink-foreground);
             background: var(--vscode-textBlockQuote-background);
-            transform: scale(1.02);
+            transform: scale(1.05);
         }
         
         .drop-zone-icon {
-            font-size: 16px;
+            font-size: 24px;
             margin: 0;
+            color: var(--vscode-descriptionForeground);
         }
         
         .drop-zone-text {
             color: var(--vscode-descriptionForeground);
-            font-size: 13px;
+            font-size: 11px;
             margin: 0;
+            font-weight: 500;
         }
         
         .drop-zone-hint {
-            color: var(--vscode-descriptionForeground);
-            font-size: 11px;
-            margin: 0;
-            opacity: 0.7;
+            display: none;
         }
         
         .attachments-grid {
@@ -1399,45 +1382,48 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         
         .attachment-preview {
             width: 100%;
-            height: 100px;
+            aspect-ratio: 1;
             object-fit: cover;
             display: block;
             cursor: pointer;
+            border-radius: 4px;
         }
         
         .attachment-info {
-            padding: 8px;
-            font-size: 11px;
-            color: var(--vscode-descriptionForeground);
-            display: flex;
-            align-items: center;
-            justify-content: space-between;
+            display: none;
         }
         
         .attachment-name {
-            white-space: nowrap;
-            overflow: hidden;
-            text-overflow: ellipsis;
-            max-width: 80px;
+            display: none;
         }
         
         .attachment-remove {
-            background: var(--vscode-editorError-foreground);
+            position: absolute;
+            top: 4px;
+            right: 4px;
+            background: rgba(0, 0, 0, 0.7);
             color: white;
             border: none;
             border-radius: 50%;
-            width: 20px;
-            height: 20px;
+            width: 24px;
+            height: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 12px;
-            transition: transform 0.2s ease;
-            flex-shrink: 0;
+            font-size: 14px;
+            transition: all 0.2s ease;
+            opacity: 0;
+            pointer-events: none;
+        }
+        
+        .attachment-item:hover .attachment-remove {
+            opacity: 1;
+            pointer-events: auto;
         }
         
         .attachment-remove:hover {
+            background: var(--vscode-editorError-foreground);
             transform: scale(1.1);
         }
         
@@ -1540,41 +1526,37 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         </div>
         
         <div class="answer-section">
-            <label class="answer-label" for="answerInput">
-                Your Expert Response
+            <div class="answer-header">
+                <div class="quick-actions">
+                    <button class="quick-action" onclick="insertTemplate('needs-clarification')">Needs Clarification</button>
+                    <button class="quick-action" onclick="insertTemplate('approve')">Approve</button>
+                    <button class="quick-action" onclick="insertTemplate('reject')">Reject with Reason</button>
+                    <button class="quick-action" onclick="insertTemplate('alternative')">Suggest Alternative</button>
+                </div>
                 <span class="char-counter" id="charCounter">0 characters</span>
-            </label>
-            
-            <div class="quick-actions">
-                <button class="quick-action" onclick="insertTemplate('needs-clarification')">Needs Clarification</button>
-                <button class="quick-action" onclick="insertTemplate('approve')">Approve</button>
-                <button class="quick-action" onclick="insertTemplate('reject')">Reject with Reason</button>
-                <button class="quick-action" onclick="insertTemplate('alternative')">Suggest Alternative</button>
             </div>
             
             <textarea 
                 id="answerInput" 
                 class="answer-input" 
-                placeholder="Provide your expert guidance here... (You can also paste images with Ctrl+V)"
+                placeholder="Your response... (Paste images with Ctrl+V)"
                 autofocus
             ></textarea>
         </div>
         
         <div class="attachments-section">
-            <label class="attachments-label">
-                📎 Attachments
-                <span class="attachment-count" id="attachmentCount">0 files</span>
-            </label>
-            
-            <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                <span class="drop-zone-icon">📁</span>
-                <span class="drop-zone-text">Drop files, paste (Ctrl+V), or click to browse</span>
-                <span class="drop-zone-hint">• PNG, JPEG, GIF, WebP • Max 5MB</span>
+            <div class="attachments-label">
+                📎 Attachments <span class="attachment-count" id="attachmentCount">(0)</span>
             </div>
             
             <input type="file" id="fileInput" class="hidden-input" multiple accept="image/*">
             
-            <div class="attachments-grid" id="attachmentsGrid"></div>
+            <div class="attachments-grid" id="attachmentsGrid">
+                <div class="drop-zone drop-zone-card" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <span class="drop-zone-icon">+</span>
+                    <span class="drop-zone-text">Add</span>
+                </div>
+            </div>
         </div>
         
         <div id="previewModal" class="attachment-preview-modal" onclick="closePreviewModal()">
@@ -1832,7 +1814,14 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         
         // Render attachments grid
         function renderAttachments() {
-            attachmentsGrid.innerHTML = attachments.map(att => \`
+            const dropZoneCard = \`
+                <div class="drop-zone drop-zone-card" id="dropZone" onclick="document.getElementById('fileInput').click()">
+                    <span class="drop-zone-icon">+</span>
+                    <span class="drop-zone-text">Add</span>
+                </div>
+            \`;
+            
+            const attachmentCards = attachments.map(att => \`
                 <div class="attachment-item" data-id="\${att.id}">
                     <img 
                         src="\${att.preview}" 
@@ -1840,12 +1829,19 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
                         class="attachment-preview"
                         onclick="openPreview('\${att.preview}')"
                     >
-                    <div class="attachment-info">
-                        <span class="attachment-name" title="\${att.name}">\${att.name}</span>
-                        <button class="attachment-remove" onclick="removeAttachment('\${att.id}')" title="Remove">✕</button>
-                    </div>
+                    <button class="attachment-remove" onclick="removeAttachment('\${att.id}')" title="Remove">✕</button>
                 </div>
             \`).join('');
+            
+            attachmentsGrid.innerHTML = dropZoneCard + attachmentCards;
+            
+            // Re-attach event listeners to the new drop zone
+            const newDropZone = document.getElementById('dropZone');
+            if (newDropZone) {
+                newDropZone.addEventListener('dragover', handleDragOver);
+                newDropZone.addEventListener('dragleave', handleDragLeave);
+                newDropZone.addEventListener('drop', handleDrop);
+            }
         }
         
         // Remove attachment
@@ -1880,23 +1876,23 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
             setTimeout(() => indicator.remove(), 3000);
         }
         
-        // Drag and drop handlers
-        dropZone.addEventListener('dragover', (e) => {
+        // Drag and drop handlers as functions for re-use
+        function handleDragOver(e) {
             e.preventDefault();
             e.stopPropagation();
-            dropZone.classList.add('drag-over');
-        });
+            e.currentTarget.classList.add('drag-over');
+        }
         
-        dropZone.addEventListener('dragleave', (e) => {
+        function handleDragLeave(e) {
             e.preventDefault();
             e.stopPropagation();
-            dropZone.classList.remove('drag-over');
-        });
+            e.currentTarget.classList.remove('drag-over');
+        }
         
-        dropZone.addEventListener('drop', (e) => {
+        function handleDrop(e) {
             e.preventDefault();
             e.stopPropagation();
-            dropZone.classList.remove('drag-over');
+            e.currentTarget.classList.remove('drag-over');
             
             const files = Array.from(e.dataTransfer.files);
             files.forEach(file => {
@@ -1904,7 +1900,15 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
                     processFile(file);
                 }
             });
-        });
+        }
+        
+        // Initial drop zone listeners
+        const initialDropZone = document.getElementById('dropZone');
+        if (initialDropZone) {
+            initialDropZone.addEventListener('dragover', handleDragOver);
+            initialDropZone.addEventListener('dragleave', handleDragLeave);
+            initialDropZone.addEventListener('drop', handleDrop);
+        }
         
         // File input handler
         fileInput.addEventListener('change', (e) => {
