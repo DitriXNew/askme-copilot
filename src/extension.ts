@@ -1311,16 +1311,17 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         
         /* Attachments Section Styles */
         .attachments-section {
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
         
         .attachments-label {
             display: flex;
             align-items: center;
-            gap: 10px;
-            margin-bottom: 12px;
+            gap: 8px;
+            margin-bottom: 8px;
             font-weight: 600;
             color: var(--vscode-input-foreground);
+            font-size: 14px;
         }
         
         .attachment-count {
@@ -1332,13 +1333,18 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         
         .drop-zone {
             border: 2px dashed var(--vscode-input-border);
-            border-radius: 8px;
-            padding: 30px;
+            border-radius: 6px;
+            padding: 12px;
             text-align: center;
             transition: all 0.3s ease;
             background: var(--vscode-input-background);
             cursor: pointer;
             position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-height: 40px;
         }
         
         .drop-zone:hover {
@@ -1353,27 +1359,28 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
         }
         
         .drop-zone-icon {
-            font-size: 32px;
-            margin-bottom: 10px;
+            font-size: 16px;
+            margin: 0;
         }
         
         .drop-zone-text {
             color: var(--vscode-descriptionForeground);
-            font-size: 14px;
+            font-size: 13px;
+            margin: 0;
         }
         
         .drop-zone-hint {
             color: var(--vscode-descriptionForeground);
-            font-size: 12px;
-            margin-top: 8px;
-            opacity: 0.8;
+            font-size: 11px;
+            margin: 0;
+            opacity: 0.7;
         }
         
         .attachments-grid {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-            gap: 12px;
-            margin-top: 15px;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 8px;
+            margin-top: 10px;
         }
         
         .attachment-item {
@@ -1560,9 +1567,9 @@ const getAskExpertTemplate = () => `<!DOCTYPE html>
             </label>
             
             <div class="drop-zone" id="dropZone" onclick="document.getElementById('fileInput').click()">
-                <div class="drop-zone-icon">📁</div>
-                <div class="drop-zone-text">Drag & drop images here or click to browse</div>
-                <div class="drop-zone-hint">Supports: PNG, JPEG, GIF, WebP • Max 5MB per file • Paste images with Ctrl+V</div>
+                <span class="drop-zone-icon">📁</span>
+                <span class="drop-zone-text">Drop files, paste (Ctrl+V), or click to browse</span>
+                <span class="drop-zone-hint">• PNG, JPEG, GIF, WebP • Max 5MB</span>
             </div>
             
             <input type="file" id="fileInput" class="hidden-input" multiple accept="image/*">
