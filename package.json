@@ -119,13 +119,13 @@
         "askMeCopilot.enableResponseCache": {
           "type": "boolean",
           "default": true,
-          "description": "Cache expert responses for identical questions"
+          "description": "Cache expert responses to avoid asking the same question twice. When enabled, if Copilot asks an identical question with the same context, the cached response will be returned instead of prompting you again."
         },
         "askMeCopilot.cacheTimeToLive": {
           "type": "number",
           "default": 300000,
           "minimum": 60000,
-          "description": "How long to keep cached responses in milliseconds"
+          "description": "How long to keep cached responses in milliseconds (default: 5 minutes). After this time, the same question will prompt you again."
         },
         "askMeCopilot.logLevel": {
           "type": "string",
