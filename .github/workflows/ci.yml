@@ -53,8 +53,8 @@ jobs:
             }
             
             // Validate MCP tools
-            if (!pkg.contributes.languageModelTools || pkg.contributes.languageModelTools.length !== 4) {
-              throw new Error('Expected exactly 4 language model tools');
+            if (!pkg.contributes.languageModelTools || pkg.contributes.languageModelTools.length !== 5) {
+              throw new Error('Expected exactly 5 language model tools');
             }
             
             console.log('✅ Package.json validation passed');

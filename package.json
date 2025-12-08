@@ -2,14 +2,14 @@
   "name": "ask-me-copilot-tool",
   "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
   "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
-  "version": "1.3.1",
+  "version": "1.5.1",
   "publisher": "DitriX",
   "author": {
     "name": "DitriX",
     "email": "support@askmecopilot.dev"
   },
   "engines": {
-    "vscode": "^1.95.0"
+    "vscode": "^1.106.0"
   },
   "categories": [
     "AI",
@@ -60,7 +60,7 @@
     "url": "https://github.com/DitriXNew/askme-copilot/issues"
   },
   "license": "MIT",
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "activationEvents": [
     "onStartupFinished"
   ],
@@ -112,20 +112,20 @@
         },
         "askMeCopilot.responseTimeout": {
           "type": "number",
-          "default": 300000,
+          "default": 0,
           "minimum": 0,
-          "description": "Timeout for expert response in milliseconds (0 = no timeout)"
+          "description": "Timeout for expert response in milliseconds (0 = no timeout, waits indefinitely)"
         },
         "askMeCopilot.enableResponseCache": {
           "type": "boolean",
           "default": true,
-          "description": "Cache expert responses for identical questions"
+          "description": "Cache expert responses to avoid asking the same question twice. When enabled, if Copilot asks an identical question with the same context, the cached response will be returned instead of prompting you again."
         },
         "askMeCopilot.cacheTimeToLive": {
           "type": "number",
           "default": 300000,
           "minimum": 60000,
-          "description": "How long to keep cached responses in milliseconds"
+          "description": "How long to keep cached responses in milliseconds (default: 5 minutes). After this time, the same question will prompt you again."
         },
         "askMeCopilot.logLevel": {
           "type": "string",
@@ -137,6 +137,11 @@
             "error"
           ],
           "description": "Logging level for debugging"
+        },
+        "askMeCopilot.disableImageCompression": {
+          "type": "boolean",
+          "default": false,
+          "description": "Disable image compression completely. When enabled (true), all images will be returned at their original size regardless of compression parameters (quality, maxWidth, maxHeight). Useful if you want to always preserve original image quality or if compression causes issues."
         }
       }
     },
@@ -282,12 +287,56 @@
             "action"
           ]
         }
+      },
+      {
+        "name": "ask-me-copilot-tool_readImage",
+        "displayName": "🖼️ Read Image",
+        "userDescription": "Read and analyze an image file from the workspace",
+        "modelDescription": "Use this tool to read and analyze image files from the user's project. Supports image compression to reduce context size. Use cases: 1) Analyzing UI mockups to implement designs, 2) Reading architecture diagrams or flowcharts, 3) Viewing screenshots for debugging, 4) Inspecting icons, logos, graphics. COMPRESSION OPTIONS: Use 'quality' (1-100, default 100) to compress - lower = smaller file. Use 'maxWidth'/'maxHeight' to resize large images. Example: {filePath: 'mockup.png', quality: 50, maxWidth: 800} - compresses to 50% quality and max 800px wide. Compression can be disabled in settings.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "image",
+        "icon": "$(file-media)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Path to the image file (relative to workspace root or absolute path). Supports: PNG, JPEG, GIF, WebP, BMP, SVG, ICO"
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional description of what you're looking for in the image or why you need to see it"
+            },
+            "quality": {
+              "type": "number",
+              "minimum": 1,
+              "maximum": 100,
+              "description": "Image quality 1-100. 100 = original quality (no compression), lower values = more compression. Default: 100 (no compression). Use 50-80 for good balance of quality and size."
+            },
+            "maxWidth": {
+              "type": "number",
+              "minimum": 1,
+              "description": "Maximum width in pixels. If image is wider, it will be proportionally resized. Useful for large screenshots/mockups."
+            },
+            "maxHeight": {
+              "type": "number",
+              "minimum": 1,
+              "description": "Maximum height in pixels. If image is taller, it will be proportionally resized. Useful for long screenshots."
+            }
+          },
+          "required": [
+            "filePath"
+          ]
+        }
       }
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
+    "vscode:prepublish": "npm run bundle:production",
     "compile": "tsc -p ./",
+    "bundle": "node esbuild.js",
+    "bundle:production": "node esbuild.js --production",
+    "bundle:watch": "node esbuild.js --watch",
     "watch": "tsc -watch -p ./",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
@@ -324,13 +373,14 @@
     "@types/mocha": "^10.0.10",
     "@types/node": "^24.5.2",
     "@types/sinon": "^17.0.4",
-    "@types/vscode": "^1.95.0",
+    "@types/vscode": "^1.106.1",
     "@typescript-eslint/eslint-plugin": "^8.44.0",
     "@typescript-eslint/parser": "^8.44.0",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
     "@vscode/vsce": "^3.6.0",
     "c8": "^10.1.3",
+    "esbuild": "^0.27.1",
     "eslint": "^9.35.0",
     "mocha": "^11.7.2",
     "rimraf": "^6.0.1",
@@ -338,5 +388,6 @@
     "typescript": "^5.9.2"
   },
   "dependencies": {
+    "jimp": "^1.6.0"
   }
 }
