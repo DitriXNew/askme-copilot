@@ -53,3 +53,28 @@ export interface IReadImageParameters {
 
 export type Priority = 'low' | 'normal' | 'high' | 'critical';
 export type NotificationStyle = 'subtle' | 'normal' | 'prominent';
+
+// Expert Monitor types
+export interface IMonitorMessage {
+    id: string;
+    text: string;
+    timestamp: number;
+    status: 'pending' | 'delivered';
+    attachments?: IAttachment[];
+}
+
+export interface ICheckTaskStatusParameters {
+    /** Optional reason for checking status */
+    reason?: string;
+}
+
+export interface IMonitorStatus {
+    /** Whether pause is active - Copilot should wait */
+    isPaused: boolean;
+    /** Whether expert wants to be consulted */
+    shouldAskExpert: boolean;
+    /** Pending messages from expert */
+    messages: IMonitorMessage[];
+    /** Summary for Copilot */
+    summary: string;
+}

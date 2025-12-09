@@ -4,3 +4,4 @@ export { ConfigurationManager } from './config';
 export { AnalyticsCollector, analytics } from './analytics';
 export { ResponseCache, responseCache } from './cache';
 export { playNotificationSound, showNotification } from './notification';
+export { expertMonitorState } from './expertMonitorState';

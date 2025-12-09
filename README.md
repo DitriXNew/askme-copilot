@@ -20,7 +20,7 @@ Copilot's default behavior causes issues:
 
 ## The Solution
 
-This extension adds **5 tools** for Copilot to communicate with you:
+This extension adds **6 tools** for Copilot to communicate with you:
 
 | Tool | When Copilot Uses It |
 |------|---------------------|
@@ -29,50 +29,91 @@ This extension adds **5 tools** for Copilot to communicate with you:
 | 📝 **Review Code** | Security-sensitive or complex implementations |
 | ⚠️ **Confirm Action** | Before deletions, schema changes, breaking changes |
 | 🖼️ **Read Image** | Analyze mockups, diagrams, icons in your project |
+| 📊 **Check Task Status** | Get messages from expert, respect pause, check if consultation needed |
 
-### 🖼️ Read Image Tool (v1.5.0)
+### 🧠 Ask Expert
 
-Copilot can **analyze images from your project** with optional compression:
+Copilot asks you questions when uncertain:
+
+![Ask Expert Dialog](docs/AskExpert.png)
+
+### 🎯 Select Options
+
+Choose from multiple options presented by Copilot:
+
+![Select Options Dialog](docs/Selection.png)
+
+### ⚠️ Confirm Action
+
+Confirm dangerous operations before Copilot proceeds:
+
+![Confirm Action Dialog](docs/Question.png)
+
+### 📝 Review Code
+
+Review and edit code suggested by Copilot:
+
+![Code Review Dialog](docs/CodeReview.png)
+
+### 🖼️ Read Image
+
+Copilot analyzes images from your project with compression support:
+
+![Read Image Tool](docs/ImageReader.png)
+
+### 📊 Expert Monitor Panel (v1.6.0)
+
+A **persistent panel** (next to Terminal) for real-time communication with Copilot:
+
+![Expert Monitor Panel](docs/Expert%20Monitor.png)
+
+![Expert Monitor with Pause](docs/Pause.png)
+
+**Controls:**
+- **⏸️ Pause Toggle** - Blocks Copilot execution until you're ready. When active, Copilot will wait at the next `checkTaskStatus` call until you unpause
+- **🧠 Ask Expert Toggle** - Signals Copilot to call `askExpert` tool on next status check
+- **📎 Attach Button** - Add files/images to your message (or use Ctrl+V to paste from clipboard)
+- **➤ Send Button** - Queue message for Copilot (Ctrl+Enter)
+
+**Message Queue:**
+- Messages are stored and delivered when Copilot calls `checkTaskStatus`
+- After delivery, messages are cleared from the queue
+- Yellow dot = pending, Green dot = delivered
+
+**⚠️ Important Limitation:**
+
+This feature works **when Copilot periodically polls** the `checkTaskStatus` tool. However, AI agents can "forget" to call it regularly. There are two workarounds:
+
+1. **Add to your prompt** (see Recommended Prompt below) instructions to check status every 10-20 seconds
+2. **Manually ask Copilot** to "check task status" or "update status" - this triggers the tool call and delivers your queued messages
 
 **Use cases:**
-- UI mockups → implement designs
-- Architecture diagrams → understand system
-- Screenshots → debug visual issues
-- Icons/logos → inspect graphics
-
-**Compression options** (to save context space):
-```javascript
-// Original image (no compression)
-readImage({ filePath: "mockup.png" })
-
-// Compress to 50% quality, max 800px wide
-readImage({ filePath: "screenshot.png", quality: 50, maxWidth: 800 })
-
-// Just resize, keep quality
-readImage({ filePath: "diagram.png", maxWidth: 1200, maxHeight: 800 })
-```
-
-| Parameter | Description |
-|-----------|-------------|
-| `filePath` | Path to image (relative or absolute) |
-| `quality` | 1-100 (100 = no compression, lower = smaller file) |
-| `maxWidth` | Resize if image wider than this |
-| `maxHeight` | Resize if image taller than this |
+- See Copilot going wrong direction? → Pause + send correction
+- Have a new idea mid-task? → Queue message for next check
+- Need to review changes? → Pause to catch up
+- Want to add context? → Write tasks/notes, then ask Copilot to "check status"
 
 ## Quick Start
 
 1. Install from [VS Code Marketplace](https://marketplace.visualstudio.com/items?itemName=DitriX.ask-me-copilot-tool)
 2. Enable tools in Copilot Chat (⚙️ Configure Tools)
-3. Add to `.github/copilot-instructions.md`:
+3. Open **Expert Monitor** panel (View → Open View → Expert Monitor)
+4. Add to `.github/copilot-instructions.md` (see Recommended Prompt below)
+
+## Recommended Prompt
+
+Add this to your `.github/copilot-instructions.md` for best results:
 
 ```markdown
-ALWAYS use askExpert tool when:
-- Uncertain about requirements
-- After 2 failed attempts
-- Before destructive operations
-- For architectural decisions
+### 0. MAIN RULE
+ALWAYS escalate (ask expert via tools) IF uncertain, AMBIGUOUS, or CONFLICTING instructions, OR repeated failures, OR destructive edits, OR public API changes, OR architecture uncertainty, OR need to delete/refactor public API. Never guess silently. Never continue after 2 failed attempts without escalation.
 
-At end of work, ask expert for confirmation.
+ALWAYS WHEN YOU ARE UNSURE, ASK FOR HELP.
+ALWAYS ESCALATE EARLY.
+ALWAYS AT THE END OF YOUR WORK ASK EXPERT ABOUT WHAT YOU HAVE DONE AND FOLLOW HIS INSTRUCTIONS.
+EACH TIME ADD CONSIDERATIONS WITH EXPERT IN ALL YOURS TODO LIST IN BEGINNING AND IN THE END OF ANY JOB.
+
+EACH 10-20 second OF YOUR WORK, CHECK TASK STATUS WITH checkTaskStatus TOOL AND FOLLOW ITS INSTRUCTIONS.
 ```
 
 ## Features

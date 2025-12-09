@@ -2,9 +2,9 @@ name: 🧪 CI/CD Pipeline - Ask Me Copilot Extension
 
 on:
   push:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
   pull_request:
-    branches: [ main, develop ]
+    branches: [ main, master, develop ]
   workflow_dispatch:
 
 env:
@@ -53,8 +53,8 @@ jobs:
             }
             
             // Validate MCP tools
-            if (!pkg.contributes.languageModelTools || pkg.contributes.languageModelTools.length !== 5) {
-              throw new Error('Expected exactly 5 language model tools');
+            if (!pkg.contributes.languageModelTools || pkg.contributes.languageModelTools.length !== 6) {
+              throw new Error('Expected exactly 6 language model tools');
             }
             
             console.log('✅ Package.json validation passed');
@@ -70,14 +70,15 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # Simplified matrix - VS Code extensions don't need multi-Node testing
+        # VS Code bundles its own Node.js runtime for extensions
         os: [ubuntu-latest, windows-latest, macos-latest]
-        node: ['18.x', '20.x', '22.x']
-        vscode: ['stable', 'insiders']
-        exclude:
-          # Reduce matrix size - skip some combinations for efficiency
-          - os: macos-latest
-            node: '18.x'
-          - os: windows-latest
+        node: ['20.x']  # Use LTS version only
+        vscode: ['stable']
+        include:
+          # Add insiders test on Ubuntu only for edge case coverage
+          - os: ubuntu-latest
+            node: '20.x'
             vscode: 'insiders'
 
     steps:
@@ -163,7 +164,9 @@ jobs:
               'ask-me-copilot-tool_askExpert',
               'ask-me-copilot-tool_selectFromList', 
               'ask-me-copilot-tool_reviewCode',
-              'ask-me-copilot-tool_confirmAction'
+              'ask-me-copilot-tool_confirmAction',
+              'ask-me-copilot-tool_readImage',
+              'ask-me-copilot-tool_checkTaskStatus'
             ];
             
             expectedTools.forEach(expectedId => {

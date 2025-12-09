@@ -7,8 +7,10 @@ import {
     SelectFromListTool, 
     ReviewCodeTool, 
     ConfirmActionTool, 
-    ReadImageTool 
+    ReadImageTool,
+    CheckTaskStatusTool
 } from './tools';
+import { ExpertMonitorViewProvider } from './views';
 
 export function activate(context: vscode.ExtensionContext) {
     const logger = initLogger();
@@ -23,19 +25,36 @@ export function activate(context: vscode.ExtensionContext) {
         })
     );
     
+    // Register Expert Monitor View Provider
+    const expertMonitorProvider = new ExpertMonitorViewProvider(context.extensionUri);
+    context.subscriptions.push(
+        vscode.window.registerWebviewViewProvider(
+            ExpertMonitorViewProvider.viewType,
+            expertMonitorProvider,
+            {
+                webviewOptions: {
+                    retainContextWhenHidden: true
+                }
+            }
+        )
+    );
+    logger.info('✅ Registered Expert Monitor panel');
+    
     // Register all tools
     const askExpertTool = new AskExpertTool(context);
     const selectFromListTool = new SelectFromListTool(context);
     const reviewCodeTool = new ReviewCodeTool(context);
     const confirmActionTool = new ConfirmActionTool(context);
     const readImageTool = new ReadImageTool(context);
+    const checkTaskStatusTool = new CheckTaskStatusTool(context);
     
     context.subscriptions.push(
         vscode.lm.registerTool('ask-me-copilot-tool_askExpert', askExpertTool),
         vscode.lm.registerTool('ask-me-copilot-tool_selectFromList', selectFromListTool),
         vscode.lm.registerTool('ask-me-copilot-tool_reviewCode', reviewCodeTool),
         vscode.lm.registerTool('ask-me-copilot-tool_confirmAction', confirmActionTool),
-        vscode.lm.registerTool('ask-me-copilot-tool_readImage', readImageTool)
+        vscode.lm.registerTool('ask-me-copilot-tool_readImage', readImageTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_checkTaskStatus', checkTaskStatusTool)
     );
     
     logger.info('✅ Registered all language model tools');

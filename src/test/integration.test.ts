@@ -294,6 +294,91 @@ function authenticateUser(username: string, password: string): boolean {
             });
         });
     });
+    
+    suite('Check Task Status Tool Simulation', () => {
+        test('should return correct status when no actions pending', () => {
+            const result = simulateCheckTaskStatus({}, {
+                isPaused: false,
+                shouldAskExpert: false,
+                messages: []
+            });
+            
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('No pending actions'));
+            assert.strictEqual(result.shouldBlock, false);
+        });
+        
+        test('should block when paused', () => {
+            const result = simulateCheckTaskStatus({}, {
+                isPaused: true,
+                shouldAskExpert: false,
+                messages: []
+            });
+            
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('paused'));
+            assert.strictEqual(result.shouldBlock, true);
+        });
+        
+        test('should signal ask expert when toggle is on', () => {
+            const result = simulateCheckTaskStatus({}, {
+                isPaused: false,
+                shouldAskExpert: true,
+                messages: []
+            });
+            
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('Expert wants to be consulted'));
+            assert.strictEqual(result.shouldBlock, false);
+        });
+        
+        test('should deliver pending messages', () => {
+            const result = simulateCheckTaskStatus({}, {
+                isPaused: false,
+                shouldAskExpert: false,
+                messages: [
+                    { id: '1', text: 'Please check file X', status: 'pending' },
+                    { id: '2', text: 'Use different approach', status: 'pending' },
+                    { id: '3', text: 'Old message', status: 'delivered' }
+                ]
+            });
+            
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('2 message(s)'));
+            assert.ok(result.output?.includes('Please check file X'));
+            assert.ok(result.output?.includes('Use different approach'));
+            assert.ok(!result.output?.includes('Old message')); // Delivered messages not included
+            assert.strictEqual(result.shouldBlock, false);
+        });
+        
+        test('should handle combined flags', () => {
+            const result = simulateCheckTaskStatus({}, {
+                isPaused: false,
+                shouldAskExpert: true,
+                messages: [
+                    { id: '1', text: 'Important note', status: 'pending' }
+                ]
+            });
+            
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('Expert wants to be consulted'));
+            assert.ok(result.output?.includes('1 message(s)'));
+        });
+        
+        test('should prioritize pause over other flags', () => {
+            const result = simulateCheckTaskStatus({}, {
+                isPaused: true,
+                shouldAskExpert: true,
+                messages: [
+                    { id: '1', text: 'Message', status: 'pending' }
+                ]
+            });
+            
+            // When paused, should only return pause message
+            assert.ok(result.output?.includes('paused'));
+            assert.strictEqual(result.shouldBlock, true);
+        });
+    });
 });
 
 /**
@@ -311,6 +396,12 @@ function simulateToolCall(testCase: MockToolCall): { success: boolean; output?: 
                 return simulateReviewCode(testCase.input);
             case 'ask-me-copilot-tool_confirmAction':
                 return simulateConfirmAction(testCase.input);
+            case 'ask-me-copilot-tool_checkTaskStatus':
+                return simulateCheckTaskStatus(testCase.input, {
+                    isPaused: false,
+                    shouldAskExpert: false,
+                    messages: []
+                });
             default:
                 return { success: false, error: 'Unknown tool' };
         }
@@ -400,5 +491,43 @@ function simulateConfirmAction(input: any): { success: boolean; output?: string;
     return { 
         success: true, 
         output: `Expert confirmed action: "${input.action}"` 
+    };
+}
+
+function simulateCheckTaskStatus(input: any, state: {
+    isPaused: boolean;
+    shouldAskExpert: boolean;
+    messages: Array<{ id: string; text: string; status: string }>;
+}): { success: boolean; output?: string; shouldBlock: boolean } {
+    const results: string[] = [];
+    
+    if (state.isPaused) {
+        return {
+            success: true,
+            output: '⏸️ Expert has paused execution. Waiting for resume...',
+            shouldBlock: true
+        };
+    }
+    
+    if (state.shouldAskExpert) {
+        results.push('🧠 **Expert wants to be consulted!** Please use the askExpert tool to get input before continuing.');
+    }
+    
+    const pending = state.messages.filter(m => m.status === 'pending');
+    if (pending.length > 0) {
+        results.push(`📨 **${pending.length} message(s) from expert:**`);
+        pending.forEach((msg, i) => {
+            results.push(`${i + 1}. ${msg.text}`);
+        });
+    }
+    
+    if (results.length === 0) {
+        results.push('✅ No pending actions from expert. Continue with your task.');
+    }
+    
+    return {
+        success: true,
+        output: results.join('\n'),
+        shouldBlock: false
     };
 }

@@ -297,4 +297,191 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             assert.strictEqual(errors4.length, 0);
         });
     });
+    
+    suite('ExpertMonitorState Tests', () => {
+        test('should manage pause state correctly', () => {
+            // Simulate state management
+            let isPaused = false;
+            let pauseResolve: (() => void) | null = null;
+            let pausePromise: Promise<void> | null = null;
+            
+            const setPaused = (paused: boolean) => {
+                isPaused = paused;
+                if (paused) {
+                    pausePromise = new Promise(resolve => {
+                        pauseResolve = resolve;
+                    });
+                } else {
+                    if (pauseResolve) {
+                        pauseResolve();
+                        pauseResolve = null;
+                    }
+                    pausePromise = null;
+                }
+            };
+            
+            // Test pause
+            setPaused(true);
+            assert.strictEqual(isPaused, true);
+            assert.ok(pausePromise !== null, 'Pause promise should be created');
+            
+            // Test unpause
+            setPaused(false);
+            assert.strictEqual(isPaused, false);
+            assert.strictEqual(pauseResolve, null, 'Pause resolve should be cleared');
+        });
+        
+        test('should manage shouldAskExpert toggle', () => {
+            let shouldAskExpert = false;
+            
+            const setShouldAskExpert = (value: boolean) => {
+                shouldAskExpert = value;
+            };
+            
+            const consumeShouldAskExpert = (): boolean => {
+                const current = shouldAskExpert;
+                shouldAskExpert = false;
+                return current;
+            };
+            
+            // Set to true
+            setShouldAskExpert(true);
+            assert.strictEqual(shouldAskExpert, true);
+            
+            // Consume - should return true and reset to false
+            const consumed = consumeShouldAskExpert();
+            assert.strictEqual(consumed, true);
+            assert.strictEqual(shouldAskExpert, false);
+            
+            // Consume again - should return false
+            const consumedAgain = consumeShouldAskExpert();
+            assert.strictEqual(consumedAgain, false);
+        });
+        
+        test('should manage message queue', () => {
+            interface TestMessage {
+                id: string;
+                text: string;
+                status: 'pending' | 'delivered';
+            }
+            
+            let messages: TestMessage[] = [];
+            
+            const addMessage = (text: string) => {
+                messages.push({
+                    id: Date.now().toString(),
+                    text,
+                    status: 'pending'
+                });
+            };
+            
+            const consumePendingMessages = () => {
+                const pending = messages.filter(m => m.status === 'pending');
+                pending.forEach(m => m.status = 'delivered');
+                return pending;
+            };
+            
+            // Add messages
+            addMessage('First message');
+            addMessage('Second message');
+            assert.strictEqual(messages.length, 2);
+            
+            // Consume pending
+            const consumed = consumePendingMessages();
+            assert.strictEqual(consumed.length, 2);
+            assert.strictEqual(messages[0].status, 'delivered');
+            assert.strictEqual(messages[1].status, 'delivered');
+            
+            // Consume again - should be empty
+            const consumedAgain = consumePendingMessages();
+            assert.strictEqual(consumedAgain.length, 0);
+        });
+        
+        test('should remove messages by id', () => {
+            interface TestMessage {
+                id: string;
+                text: string;
+            }
+            
+            let messages: TestMessage[] = [
+                { id: '1', text: 'First' },
+                { id: '2', text: 'Second' },
+                { id: '3', text: 'Third' }
+            ];
+            
+            const removeMessage = (id: string) => {
+                messages = messages.filter(m => m.id !== id);
+            };
+            
+            removeMessage('2');
+            assert.strictEqual(messages.length, 2);
+            assert.strictEqual(messages.find(m => m.id === '2'), undefined);
+            assert.strictEqual(messages[0].id, '1');
+            assert.strictEqual(messages[1].id, '3');
+        });
+    });
+    
+    suite('CheckTaskStatusTool Tests', () => {
+        test('should return correct status when paused', () => {
+            const getStatusResult = (isPaused: boolean, shouldAskExpert: boolean, pendingMessages: any[]) => {
+                const results: string[] = [];
+                
+                if (isPaused) {
+                    results.push('⏸️ Expert has paused execution. Waiting for resume...');
+                }
+                
+                if (shouldAskExpert) {
+                    results.push('🧠 **Expert wants to be consulted!** Please use the askExpert tool.');
+                }
+                
+                if (pendingMessages.length > 0) {
+                    results.push(`📨 **${pendingMessages.length} message(s) from expert:**`);
+                    pendingMessages.forEach((msg, i) => {
+                        results.push(`${i + 1}. ${msg.text}`);
+                    });
+                }
+                
+                if (results.length === 0) {
+                    results.push('✅ No pending actions from expert. Continue with your task.');
+                }
+                
+                return results.join('\n');
+            };
+            
+            // Test paused
+            const pausedResult = getStatusResult(true, false, []);
+            assert.ok(pausedResult.includes('paused'));
+            
+            // Test ask expert
+            const askExpertResult = getStatusResult(false, true, []);
+            assert.ok(askExpertResult.includes('Expert wants to be consulted'));
+            
+            // Test with messages
+            const messagesResult = getStatusResult(false, false, [
+                { text: 'Check file X' },
+                { text: 'Review changes' }
+            ]);
+            assert.ok(messagesResult.includes('2 message(s)'));
+            assert.ok(messagesResult.includes('Check file X'));
+            
+            // Test no actions
+            const noActionsResult = getStatusResult(false, false, []);
+            assert.ok(noActionsResult.includes('No pending actions'));
+        });
+        
+        test('should prepare correct invocation message', () => {
+            const prepareInvocation = (reason?: string) => {
+                const reasonText = reason ? ` (${reason})` : '';
+                return {
+                    invocationMessage: `📊 Checking task status${reasonText}...`
+                };
+            };
+            
+            const result1 = prepareInvocation();
+            assert.strictEqual(result1.invocationMessage, '📊 Checking task status...');
+            
+            const result2 = prepareInvocation('After completing file edit');
+            assert.strictEqual(result2.invocationMessage, '📊 Checking task status (After completing file edit)...');
+        });
+    });
 });
