@@ -2,7 +2,7 @@
   "name": "ask-me-copilot-tool",
   "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
   "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
-  "version": "1.6.4",
+  "version": "1.6.5",
   "publisher": "DitriX",
   "author": {
     "name": "DitriX",

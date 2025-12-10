@@ -134,9 +134,11 @@ class ExpertMonitorStateManager {
      * Used by checkTaskStatus tool to block execution.
      */
     public async waitIfPaused(): Promise<void> {
-        if (this._isPaused && this._pausePromise) {
+        // Atomically capture the current pause promise if paused
+        const pausePromise = this._isPaused ? this._pausePromise : null;
+        if (pausePromise) {
             getLogger().info('[ExpertMonitor] Waiting for pause to be released...');
-            await this._pausePromise;
+            await pausePromise;
             getLogger().info('[ExpertMonitor] Pause released, continuing');
         }
     }
@@ -195,7 +197,7 @@ class ExpertMonitorStateManager {
     // ==================== Helpers ====================
     
     private generateId(): string {
-        return `msg_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        return `msg_${Date.now()}_${Math.random().toString(36).substring(2, 11)}`;
     }
     
     public dispose(): void {

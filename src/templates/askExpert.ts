@@ -71,6 +71,13 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
+        // Debug logging for CSP issues
+        console.log('[AskExpert] Script loaded');
+        console.log('[AskExpert] marked available:', typeof marked !== 'undefined');
+        if (typeof marked !== 'undefined') {
+            console.log('[AskExpert] marked.parse:', typeof marked.parse);
+        }
+        
         ${getBaseScript()}
         
         const answerInput = document.getElementById('answerInput');

@@ -135,6 +135,13 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script>
+        // Debug logging for CSP issues
+        console.log('[SelectFromList] Script loaded');
+        console.log('[SelectFromList] marked available:', typeof marked !== 'undefined');
+        if (typeof marked !== 'undefined') {
+            console.log('[SelectFromList] marked.parse:', typeof marked.parse);
+        }
+        
         ${getBaseScript()}
         
         const customInput = document.getElementById('customInput');
