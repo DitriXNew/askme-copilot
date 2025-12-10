@@ -2,11 +2,11 @@
   "name": "ask-me-copilot-tool",
   "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
   "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
-  "version": "1.5.1",
+  "version": "1.6.5",
   "publisher": "DitriX",
   "author": {
     "name": "DitriX",
-    "email": "support@askmecopilot.dev"
+    "email": "ditrixnew@gmail.com"
   },
   "engines": {
     "vscode": "^1.106.0"
@@ -27,7 +27,14 @@
     "copilot tools",
     "language model tools",
     "interactive ai",
-    "developer productivity"
+    "developer productivity",
+    "expert monitor",
+    "pause copilot",
+    "task status",
+    "real-time control",
+    "image reader",
+    "image analysis",
+    "screenshot analysis"
   ],
   "icon": "icon.png",
   "galleryBanner": {
@@ -65,6 +72,26 @@
     "onStartupFinished"
   ],
   "contributes": {
+    "viewsContainers": {
+      "panel": [
+        {
+          "id": "askMeCopilotPanel",
+          "title": "Expert Monitor",
+          "icon": "$(eye)"
+        }
+      ]
+    },
+    "views": {
+      "askMeCopilotPanel": [
+        {
+          "type": "webview",
+          "id": "askMeCopilot.expertMonitor",
+          "name": "Expert Monitor",
+          "contextualTitle": "Ask Me Copilot",
+          "icon": "$(comment-discussion)"
+        }
+      ]
+    },
     "commands": [
       {
         "command": "askMeCopilot.showMetrics",
@@ -327,6 +354,25 @@
           "required": [
             "filePath"
           ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_checkTaskStatus",
+        "displayName": "📊 Check Task Status",
+        "userDescription": "Check for messages from expert, pause state, or if expert consultation is requested",
+        "modelDescription": "IMPORTANT: Call this tool frequently during your work to check for expert feedback. This tool: 1) Returns any pending messages from the expert that were queued while you were working, 2) Blocks execution if expert has paused you (waits until unpause), 3) Indicates if expert wants to be consulted (you should then call askExpert). Call this tool: after completing significant steps, before starting new major tasks, when you're about to make decisions. The tool will return messages from the expert that you should incorporate into your work.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "status",
+        "icon": "$(sync)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "reason": {
+              "type": "string",
+              "description": "Optional reason for checking status (e.g., 'completed file edit', 'before refactoring')"
+            }
+          },
+          "required": []
         }
       }
     ]

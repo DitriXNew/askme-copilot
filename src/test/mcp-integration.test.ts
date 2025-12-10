@@ -27,7 +27,7 @@ suite('MCP Integration Tests', () => {
 		const languageModelTools = extension.packageJSON.contributes?.languageModelTools;
 		assert.ok(languageModelTools, 'Extension should define language model tools');
 		assert.ok(Array.isArray(languageModelTools), 'Language model tools should be an array');
-		assert.strictEqual(languageModelTools.length, 5, 'Should have 5 language model tools');
+		assert.strictEqual(languageModelTools.length, 6, 'Should have 6 language model tools');
 		
 		// Verify specific tools exist (using the actual 'name' field)
 		const toolNames = languageModelTools.map((tool: any) => tool.name);
@@ -36,6 +36,7 @@ suite('MCP Integration Tests', () => {
 		assert.ok(toolNames.includes('ask-me-copilot-tool_reviewCode'), 'Should include reviewCode tool');
 		assert.ok(toolNames.includes('ask-me-copilot-tool_confirmAction'), 'Should include confirmAction tool');
 		assert.ok(toolNames.includes('ask-me-copilot-tool_readImage'), 'Should include readImage tool');
+		assert.ok(toolNames.includes('ask-me-copilot-tool_checkTaskStatus'), 'Should include checkTaskStatus tool');
 	});
 
 	test('MCP tools should have valid schemas', () => {
