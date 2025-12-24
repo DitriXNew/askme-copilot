@@ -582,6 +582,89 @@ export const getBaseStyles = () => `
         font-weight: 500;
     }
     
+    /* Template Chips - Inline with quick actions */
+    .templates-inline {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-sm);
+        margin-left: var(--spacing-sm);
+    }
+    
+    .templates-chips {
+        display: inline-flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-xs);
+    }
+    
+    .template-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: 4px 10px;
+        background: transparent;
+        color: var(--vscode-textLink-foreground);
+        border: 1px solid var(--vscode-textLink-foreground);
+        border-radius: var(--radius-md);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all var(--animation-duration) var(--animation-easing);
+        user-select: none;
+    }
+    
+    .template-chip:hover {
+        background: var(--vscode-textLink-foreground);
+        color: var(--vscode-editor-background);
+    }
+    
+    .template-chip.active {
+        background: var(--vscode-button-background);
+        color: var(--vscode-button-foreground);
+        border-color: var(--vscode-button-background);
+    }
+    
+    .template-chip.active:hover {
+        background: var(--vscode-button-hoverBackground);
+        border-color: var(--vscode-button-hoverBackground);
+    }
+    
+    .template-chip-check {
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .template-chip-title {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .edit-templates-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: transparent;
+        color: var(--vscode-descriptionForeground);
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all var(--animation-duration) var(--animation-easing);
+    }
+    
+    .edit-templates-icon:hover {
+        color: var(--vscode-textLink-foreground);
+        background: var(--vscode-toolbar-hoverBackground);
+    }
+    
+    .no-templates-hint {
+        font-size: 11px;
+        color: var(--vscode-descriptionForeground);
+        font-style: italic;
+    }
+    
     /* Responsive */
     @media (max-width: 600px) {
         .dialog-container {
@@ -856,5 +939,17 @@ export const getKeyboardHints = () => `
             <span class="kbd">Esc</span>
             <span>Cancel</span>
         </div>
+    </div>
+`;
+
+// Templates section (reusable) - now inline with quick actions
+export const getTemplatesSection = () => `
+    <div class="templates-inline" id="templatesSection">
+        <div class="templates-chips" id="templatesChips">
+            <!-- Template chips will be rendered here -->
+        </div>
+        <button class="edit-templates-icon" onclick="openTemplateSettings()" title="Edit Templates">
+            ⚙️
+        </button>
     </div>
 `;

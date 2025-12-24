@@ -1,7 +1,7 @@
 // Ask Me Copilot Tool - Main Extension Entry Point
 // Transforms GitHub Copilot into a collaborative partner
 import * as vscode from 'vscode';
-import { initLogger, getLogger, analytics, responseCache } from './utils';
+import { initLogger, getLogger, analytics, responseCache, TemplateEditor, panelRegistry } from './utils';
 import { 
     AskExpertTool, 
     SelectFromListTool, 
@@ -15,6 +15,9 @@ import { ExpertMonitorViewProvider } from './views';
 export function activate(context: vscode.ExtensionContext) {
     const logger = initLogger();
     logger.info('🚀 Activating Ask Me Copilot Tool extension');
+    
+    // Initialize panel registry for live template updates
+    panelRegistry.initialize(context);
     
     // Register configuration change listener
     context.subscriptions.push(
@@ -75,6 +78,10 @@ export function activate(context: vscode.ExtensionContext) {
         
         vscode.commands.registerCommand('askMeCopilot.openSettings', () => {
             vscode.commands.executeCommand('workbench.action.openSettings', '@ext:DitriX.ask-me-copilot-tool');
+        }),
+        
+        vscode.commands.registerCommand('askMeCopilot.editTemplates', () => {
+            TemplateEditor.openEditor();
         })
     );
     

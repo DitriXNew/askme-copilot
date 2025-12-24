@@ -1,5 +1,5 @@
 // Ask Expert Template - Uses base template components
-import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints } from './base';
+import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints, getTemplatesSection } from './base';
 
 export const getAskExpertTemplate = () => `<!DOCTYPE html>
 <html lang="en">
@@ -36,10 +36,7 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
         <div class="answer-section">
             <div class="answer-header">
                 <div class="quick-actions">
-                    <button class="quick-action" onclick="insertTemplate('needs-clarification')">Needs Clarification</button>
-                    <button class="quick-action" onclick="insertTemplate('approve')">Approve</button>
-                    <button class="quick-action" onclick="insertTemplate('reject')">Reject</button>
-                    <button class="quick-action" onclick="insertTemplate('alternative')">Suggest Alternative</button>
+                    ${getTemplatesSection()}
                 </div>
                 <span class="char-counter" id="charCounter">0 characters</span>
             </div>
@@ -88,14 +85,12 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
         const previousAnswerSection = document.getElementById('previousAnswerSection');
         const previousAnswerContent = document.getElementById('previousAnswerContent');
         const charCounter = document.getElementById('charCounter');
+        const templatesSection = document.getElementById('templatesSection');
+        const templatesChips = document.getElementById('templatesChips');
         
-        // Templates for quick actions
-        const templates = {
-            'needs-clarification': 'I need more information. Specifically:\\n\\n1. ',
-            'approve': 'This approach looks good. Proceed with implementation.',
-            'reject': 'I would not recommend this because:\\n\\n1. ',
-            'alternative': 'Instead, I suggest:\\n\\n'
-        };
+        // Template state
+        let responseTemplates = [];
+        let activeTemplateIndices = new Set();
         
         // Listen for messages
         window.addEventListener('message', event => {
@@ -114,14 +109,64 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
                     previousAnswerSection.style.display = 'block';
                 }
                 
+                // Handle templates - inline with quick actions
+                if (message.templates && message.templates.length > 0) {
+                    responseTemplates = message.templates;
+                    if (message.defaultTemplateIndices) {
+                        activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                    }
+                    renderTemplateChips();
+                }
+                
                 if (state.draft) {
                     answerInput.value = state.draft;
                     updateCharCounter();
                 }
             }
+            
+            // Handle live template updates from Template Editor
+            if (message.command === 'updateTemplates') {
+                responseTemplates = message.templates || [];
+                if (message.defaultTemplateIndices) {
+                    activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                }
+                renderTemplateChips();
+            }
         });
         
         vscode.postMessage({ command: 'ready' });
+        
+        function renderTemplateChips() {
+            if (!templatesChips) return;
+            
+            templatesChips.innerHTML = responseTemplates.map((template, index) => {
+                const isActive = activeTemplateIndices.has(index);
+                const title = template.displayTitle || template.title;
+                
+                return \`
+                    <div class="template-chip \${isActive ? 'active' : ''}" 
+                         data-index="\${index}"
+                         title="\${template.content}"
+                         onclick="toggleTemplate(\${index})">
+                        <span class="template-chip-check">\${isActive ? '✓' : ''}</span>
+                        <span class="template-chip-title">\${title}</span>
+                    </div>
+                \`;
+            }).join('');
+        }
+        
+        function toggleTemplate(index) {
+            if (activeTemplateIndices.has(index)) {
+                activeTemplateIndices.delete(index);
+            } else {
+                activeTemplateIndices.add(index);
+            }
+            renderTemplateChips();
+        }
+        
+        function openTemplateSettings() {
+            vscode.postMessage({ command: 'openSettings' });
+        }
         
         function updateCharCounter() {
             charCounter.textContent = answerInput.value.length + ' characters';
@@ -143,23 +188,16 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
             saveDraft();
         });
         
-        function insertTemplate(templateName) {
-            const template = templates[templateName];
-            if (template) {
-                answerInput.value = template;
-                answerInput.focus();
-                answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
-                updateCharCounter();
-                updateButtonState();
-                saveDraft();
-            }
-        }
-        
         function submit() {
             const text = answerInput.value.trim();
             if (text || attachments.length > 0) {
                 state.draft = '';
                 vscode.setState(state);
+                
+                // Collect active template contents
+                const activeTemplates = Array.from(activeTemplateIndices)
+                    .map(index => responseTemplates[index].content);
+                
                 vscode.postMessage({
                     command: 'submit',
                     text: text || '[Attachments only]',
@@ -167,7 +205,8 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
                         data: a.data,
                         mimeType: a.mimeType,
                         name: a.name
-                    }))
+                    })),
+                    activeTemplates: activeTemplates
                 });
             }
         }

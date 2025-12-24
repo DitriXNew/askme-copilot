@@ -1,5 +1,5 @@
 // Select From List Template - Uses base template components
-import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints } from './base';
+import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints, getTemplatesSection } from './base';
 
 export const getSelectFromListTemplate = () => `<!DOCTYPE html>
 <html lang="en">
@@ -99,6 +99,7 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                 <div class="answer-section">
                     <div class="answer-header">
                         <span style="font-weight: 500; font-size: 13px;">Or provide a custom response:</span>
+                        ${getTemplatesSection()}
                     </div>
                     <textarea 
                         id="customInput" 
@@ -153,10 +154,14 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
         const selectedSummary = document.getElementById('selectedSummary');
         const selectedText = document.getElementById('selectedText');
         const modeIndicator = document.getElementById('modeIndicator');
+        const templatesSection = document.getElementById('templatesSection');
+        const templatesChips = document.getElementById('templatesChips');
         
         let multiSelect = false;
         let selectedOptions = new Set();
         let defaultSelection = null;
+        let responseTemplates = [];
+        let activeTemplateIndices = new Set();
         
         // Listen for messages
         window.addEventListener('message', event => {
@@ -176,9 +181,59 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                 // Update mode indicator
                 modeIndicator.textContent = multiSelect ? 'Multi-select' : 'Single';
                 
+                // Handle templates - inline with header
+                if (message.templates && message.templates.length > 0) {
+                    responseTemplates = message.templates;
+                    if (message.defaultTemplateIndices) {
+                        activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                    }
+                    renderTemplateChips();
+                }
+                
                 renderOptions(message.options || []);
             }
+            
+            // Handle live template updates from Template Editor
+            if (message.command === 'updateTemplates') {
+                responseTemplates = message.templates || [];
+                if (message.defaultTemplateIndices) {
+                    activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                }
+                renderTemplateChips();
+            }
         });
+        
+        function renderTemplateChips() {
+            if (!templatesChips) return;
+            
+            templatesChips.innerHTML = responseTemplates.map((template, index) => {
+                const isActive = activeTemplateIndices.has(index);
+                const title = template.displayTitle || template.title;
+                
+                return \`
+                    <div class="template-chip \${isActive ? 'active' : ''}" 
+                         data-index="\${index}"
+                         title="\${template.content}"
+                         onclick="toggleTemplate(\${index})">
+                        <span class="template-chip-check">\${isActive ? '✓' : ''}</span>
+                        <span class="template-chip-title">\${title}</span>
+                    </div>
+                \`;
+            }).join('');
+        }
+        
+        function toggleTemplate(index) {
+            if (activeTemplateIndices.has(index)) {
+                activeTemplateIndices.delete(index);
+            } else {
+                activeTemplateIndices.add(index);
+            }
+            renderTemplateChips();
+        }
+        
+        function openTemplateSettings() {
+            vscode.postMessage({ command: 'openSettings' });
+        }
         
         function renderOptions(options) {
             optionsContainer.innerHTML = '';
@@ -277,6 +332,10 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
             }
             
             if (result || attachments.length > 0) {
+                // Collect active template contents
+                const activeTemplates = Array.from(activeTemplateIndices)
+                    .map(index => responseTemplates[index].content);
+                
                 vscode.postMessage({
                     command: 'submit',
                     text: result || '[Attachments only]',
@@ -284,7 +343,8 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                         data: a.data,
                         mimeType: a.mimeType,
                         name: a.name
-                    }))
+                    })),
+                    activeTemplates: activeTemplates
                 });
             }
         }

@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { IReviewCodeParameters } from '../types';
-import { showNotification } from '../utils';
+import { showNotification, TemplateManager, panelRegistry } from '../utils';
 import { getCodeReviewTemplate } from '../templates';
 
 export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
@@ -55,7 +55,15 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
                 }
             );
             
+            // Register panel for live template updates
+            panelRegistry.register(panel, 'reviewCode');
+            
             panel.webview.html = getCodeReviewTemplate();
+            
+            // Load templates for this tool and prepare for display
+            const templates = TemplateManager.getTemplatesForTool('reviewCode');
+            const templatesForDisplay = TemplateManager.prepareTemplatesForDisplay(templates);
+            const defaultIndices = TemplateManager.getDefaultEnabledIndices('reviewCode');
             
             panel.webview.onDidReceiveMessage(
                 message => {
@@ -66,16 +74,29 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
                                 code,
                                 language,
                                 question,
-                                focusAreas
+                                focusAreas,
+                                templates: templatesForDisplay,
+                                defaultTemplateIndices: defaultIndices
                             });
                             break;
                         case 'submit':
-                            resolve(message.text);
+                            // Format response with active templates
+                            let finalText = message.text;
+                            if (message.activeTemplates && message.activeTemplates.length > 0) {
+                                finalText = TemplateManager.formatResponseWithTemplates(
+                                    message.text,
+                                    message.activeTemplates
+                                );
+                            }
+                            resolve(finalText);
                             panel.dispose();
                             break;
                         case 'cancel':
                             resolve(null);
                             panel.dispose();
+                            break;
+                        case 'openSettings':
+                            vscode.commands.executeCommand('askMeCopilot.editTemplates');
                             break;
                     }
                 },

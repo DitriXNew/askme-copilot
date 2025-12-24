@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { IAskExpertParameters, IExpertResponse } from '../types';
-import { getLogger, analytics, responseCache, showNotification, ConfigurationManager } from '../utils';
+import { getLogger, analytics, responseCache, showNotification, ConfigurationManager, TemplateManager, panelRegistry } from '../utils';
 import { getAskExpertTemplate } from '../templates';
 
 export class AskExpertTool extends BaseTool<IAskExpertParameters> {
@@ -128,7 +128,15 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
                 }
             );
             
+            // Register panel for live template updates
+            panelRegistry.register(panel, 'askExpert');
+            
             panel.webview.html = getAskExpertTemplate();
+            
+            // Load templates for this tool and prepare for display
+            const templates = TemplateManager.getTemplatesForTool('askExpert');
+            const templatesForDisplay = TemplateManager.prepareTemplatesForDisplay(templates);
+            const defaultIndices = TemplateManager.getDefaultEnabledIndices('askExpert');
             
             panel.webview.onDidReceiveMessage(
                 message => {
@@ -139,12 +147,23 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
                                 command: 'setData',
                                 question,
                                 context,
-                                previousAnswer
+                                previousAnswer,
+                                templates: templatesForDisplay,
+                                defaultTemplateIndices: defaultIndices
                             });
                             break;
                         case 'submit':
+                            // Format response with active templates
+                            let finalText = message.text;
+                            if (message.activeTemplates && message.activeTemplates.length > 0) {
+                                finalText = TemplateManager.formatResponseWithTemplates(
+                                    message.text,
+                                    message.activeTemplates
+                                );
+                            }
+                            
                             resolve({
-                                text: message.text,
+                                text: finalText,
                                 attachments: message.attachments || []
                             });
                             panel.dispose();
@@ -152,6 +171,9 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
                         case 'cancel':
                             resolve(null);
                             panel.dispose();
+                            break;
+                        case 'openSettings':
+                            vscode.commands.executeCommand('askMeCopilot.editTemplates');
                             break;
                     }
                 },

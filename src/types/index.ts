@@ -78,3 +78,19 @@ export interface IMonitorStatus {
     /** Summary for Copilot */
     summary: string;
 }
+
+// Response Templates types
+export interface IResponseTemplate {
+    /** Template title (max 30 characters) */
+    title: string;
+    /** Template content (max 500 characters) */
+    content: string;
+    /** Whether this template is enabled by default */
+    enabledByDefault: boolean;
+    /** Which tools can use this template */
+    applyTo: {
+        askExpert: boolean;
+        selectFromList: boolean;
+        reviewCode: boolean;
+    };
+}

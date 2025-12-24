@@ -1,5 +1,5 @@
 // Code Review Template - Uses base template components
-import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints } from './base';
+import { getBaseStyles, getBaseScript, getAttachmentsSection, getKeyboardHints, getTemplatesSection } from './base';
 
 export const getCodeReviewTemplate = () => `<!DOCTYPE html>
 <html lang="en">
@@ -103,6 +103,7 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
         <div class="answer-section">
             <div class="answer-header">
                 <span style="font-weight: 500; font-size: 13px;">Your Review:</span>
+                ${getTemplatesSection()}
             </div>
             <textarea 
                 id="reviewInput" 
@@ -136,8 +137,12 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
         const languageLabel = document.getElementById('language');
         const reviewQuestion = document.getElementById('reviewQuestion');
         const submitBtn = document.getElementById('submitBtn');
+        const templatesSection = document.getElementById('templatesSection');
+        const templatesChips = document.getElementById('templatesChips');
         
         let originalCode = '';
+        let responseTemplates = [];
+        let activeTemplateIndices = new Set();
         
         window.addEventListener('message', event => {
             const message = event.data;
@@ -161,9 +166,59 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
                     });
                 }
                 
+                // Handle templates - inline with header
+                if (message.templates && message.templates.length > 0) {
+                    responseTemplates = message.templates;
+                    if (message.defaultTemplateIndices) {
+                        activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                    }
+                    renderTemplateChips();
+                }
+                
                 updateButtonState();
             }
+            
+            // Handle live template updates from Template Editor
+            if (message.command === 'updateTemplates') {
+                responseTemplates = message.templates || [];
+                if (message.defaultTemplateIndices) {
+                    activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                }
+                renderTemplateChips();
+            }
         });
+        
+        function renderTemplateChips() {
+            if (!templatesChips) return;
+            
+            templatesChips.innerHTML = responseTemplates.map((template, index) => {
+                const isActive = activeTemplateIndices.has(index);
+                const title = template.displayTitle || template.title;
+                
+                return \`
+                    <div class="template-chip \${isActive ? 'active' : ''}" 
+                         data-index="\${index}"
+                         title="\${template.content}"
+                         onclick="toggleTemplate(\${index})">
+                        <span class="template-chip-check">\${isActive ? '✓' : ''}</span>
+                        <span class="template-chip-title">\${title}</span>
+                    </div>
+                \`;
+            }).join('');
+        }
+        
+        function toggleTemplate(index) {
+            if (activeTemplateIndices.has(index)) {
+                activeTemplateIndices.delete(index);
+            } else {
+                activeTemplateIndices.add(index);
+            }
+            renderTemplateChips();
+        }
+        
+        function openTemplateSettings() {
+            vscode.postMessage({ command: 'openSettings' });
+        }
         
         function updateButtonState() {
             const hasReview = reviewInput.value.trim().length > 0;
@@ -189,6 +244,10 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
             }
             
             if (response || attachments.length > 0) {
+                // Collect active template contents
+                const activeTemplates = Array.from(activeTemplateIndices)
+                    .map(index => responseTemplates[index].content);
+                
                 vscode.postMessage({
                     command: 'submit',
                     text: response || '[Attachments only]',
@@ -196,16 +255,22 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
                         data: a.data,
                         mimeType: a.mimeType,
                         name: a.name
-                    }))
+                    })),
+                    activeTemplates: activeTemplates
                 });
             }
         }
         
         function approveCode() {
+            // Collect active template contents for approve action too
+            const activeTemplates = Array.from(activeTemplateIndices)
+                .map(index => responseTemplates[index].content);
+            
             vscode.postMessage({
                 command: 'submit',
                 text: '✅ Code approved. Looks good!',
-                attachments: []
+                attachments: [],
+                activeTemplates: activeTemplates
             });
         }
         

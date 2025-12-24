@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { ISelectFromListParameters } from '../types';
-import { analytics, showNotification, ConfigurationManager } from '../utils';
+import { analytics, showNotification, ConfigurationManager, TemplateManager, panelRegistry } from '../utils';
 import { getSelectFromListTemplate } from '../templates';
 
 export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
@@ -70,7 +70,15 @@ export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
                 }
             );
             
+            // Register panel for live template updates
+            panelRegistry.register(panel, 'selectFromList');
+            
             panel.webview.html = getSelectFromListTemplate();
+            
+            // Load templates for this tool and prepare for display
+            const templates = TemplateManager.getTemplatesForTool('selectFromList');
+            const templatesForDisplay = TemplateManager.prepareTemplatesForDisplay(templates);
+            const defaultIndices = TemplateManager.getDefaultEnabledIndices('selectFromList');
             
             panel.webview.onDidReceiveMessage(
                 message => {
@@ -82,16 +90,29 @@ export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
                                 options: choices,
                                 multiSelect,
                                 defaultSelection,
-                                context
+                                context,
+                                templates: templatesForDisplay,
+                                defaultTemplateIndices: defaultIndices
                             });
                             break;
                         case 'submit':
-                            resolve(message.text);
+                            // Format response with active templates
+                            let finalText = message.text;
+                            if (message.activeTemplates && message.activeTemplates.length > 0) {
+                                finalText = TemplateManager.formatResponseWithTemplates(
+                                    message.text,
+                                    message.activeTemplates
+                                );
+                            }
+                            resolve(finalText);
                             panel.dispose();
                             break;
                         case 'cancel':
                             resolve(null);
                             panel.dispose();
+                            break;
+                        case 'openSettings':
+                            vscode.commands.executeCommand('askMeCopilot.editTemplates');
                             break;
                     }
                 },
