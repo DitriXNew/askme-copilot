@@ -5,3 +5,4 @@ export { AnalyticsCollector, analytics } from './analytics';
 export { ResponseCache, responseCache } from './cache';
 export { playNotificationSound, showNotification } from './notification';
 export { expertMonitorState } from './expertMonitorState';
+export { TemplateManager, ToolType } from './templateManager';

@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { IReviewCodeParameters } from '../types';
-import { showNotification } from '../utils';
+import { showNotification, TemplateManager } from '../utils';
 import { getCodeReviewTemplate } from '../templates';
 
 export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
@@ -57,6 +57,10 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
             
             panel.webview.html = getCodeReviewTemplate();
             
+            // Load templates for this tool
+            const templates = TemplateManager.getTemplatesForTool('reviewCode');
+            const defaultIndices = TemplateManager.getDefaultEnabledIndices('reviewCode');
+            
             panel.webview.onDidReceiveMessage(
                 message => {
                     switch (message.command) {
@@ -66,16 +70,29 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
                                 code,
                                 language,
                                 question,
-                                focusAreas
+                                focusAreas,
+                                templates,
+                                defaultTemplateIndices: defaultIndices
                             });
                             break;
                         case 'submit':
-                            resolve(message.text);
+                            // Format response with active templates
+                            let finalText = message.text;
+                            if (message.activeTemplates && message.activeTemplates.length > 0) {
+                                finalText = TemplateManager.formatResponseWithTemplates(
+                                    message.text,
+                                    message.activeTemplates
+                                );
+                            }
+                            resolve(finalText);
                             panel.dispose();
                             break;
                         case 'cancel':
                             resolve(null);
                             panel.dispose();
+                            break;
+                        case 'openSettings':
+                            vscode.commands.executeCommand('workbench.action.openSettings', 'askMeCopilot.templates');
                             break;
                     }
                 },

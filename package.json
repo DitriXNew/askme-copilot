@@ -169,6 +169,101 @@
           "type": "boolean",
           "default": false,
           "description": "Disable image compression completely. When enabled (true), all images will be returned at their original size regardless of compression parameters (quality, maxWidth, maxHeight). Useful if you want to always preserve original image quality or if compression causes issues."
+        },
+        "askMeCopilot.templates": {
+          "type": "array",
+          "default": [
+            {
+              "title": "Consult Expert After Task",
+              "content": "After completing the task - consult with the expert. Update your to-do list if the task requires it, and as the last item, schedule a consultation with the expert.",
+              "enabledByDefault": true,
+              "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+              }
+            },
+            {
+              "title": "",
+              "content": "",
+              "enabledByDefault": false,
+              "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+              }
+            },
+            {
+              "title": "",
+              "content": "",
+              "enabledByDefault": false,
+              "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+              }
+            },
+            {
+              "title": "",
+              "content": "",
+              "enabledByDefault": false,
+              "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+              }
+            },
+            {
+              "title": "",
+              "content": "",
+              "enabledByDefault": false,
+              "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+              }
+            }
+          ],
+          "maxItems": 5,
+          "items": {
+            "type": "object",
+            "properties": {
+              "title": {
+                "type": "string",
+                "maxLength": 30,
+                "description": "Template title (max 30 characters)"
+              },
+              "content": {
+                "type": "string",
+                "maxLength": 500,
+                "description": "Template content (max 500 characters)"
+              },
+              "enabledByDefault": {
+                "type": "boolean",
+                "description": "Whether this template is enabled by default"
+              },
+              "applyTo": {
+                "type": "object",
+                "properties": {
+                  "askExpert": {
+                    "type": "boolean",
+                    "description": "Apply to Ask Expert tool"
+                  },
+                  "selectFromList": {
+                    "type": "boolean",
+                    "description": "Apply to Select from List tool"
+                  },
+                  "reviewCode": {
+                    "type": "boolean",
+                    "description": "Apply to Review Code tool"
+                  }
+                },
+                "required": ["askExpert", "selectFromList", "reviewCode"]
+              }
+            },
+            "required": ["title", "content", "enabledByDefault", "applyTo"]
+          },
+          "description": "Up to 5 reusable instruction templates that can be automatically appended to responses. Templates with empty title or content will be ignored."
         }
       }
     },

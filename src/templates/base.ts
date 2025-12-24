@@ -582,6 +582,92 @@ export const getBaseStyles = () => `
         font-weight: 500;
     }
     
+    /* Template Chips Section */
+    .templates-section {
+        margin-bottom: var(--spacing-lg);
+    }
+    
+    .templates-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .templates-label {
+        font-weight: 500;
+        font-size: 13px;
+        color: var(--vscode-foreground);
+    }
+    
+    .templates-chips {
+        display: flex;
+        flex-wrap: wrap;
+        gap: var(--spacing-sm);
+        margin-bottom: var(--spacing-sm);
+    }
+    
+    .template-chip {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: 6px 12px;
+        background: var(--vscode-button-secondaryBackground);
+        color: var(--vscode-button-secondaryForeground);
+        border: 1px solid var(--vscode-button-border, transparent);
+        border-radius: 16px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all var(--animation-duration) var(--animation-easing);
+        user-select: none;
+    }
+    
+    .template-chip:hover {
+        background: var(--vscode-button-secondaryHoverBackground);
+    }
+    
+    .template-chip.active {
+        background: var(--vscode-button-background);
+        color: var(--vscode-button-foreground);
+        border-color: var(--vscode-focusBorder);
+    }
+    
+    .template-chip-check {
+        font-size: 14px;
+        font-weight: bold;
+    }
+    
+    .template-chip-title {
+        max-width: 200px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .templates-actions {
+        display: flex;
+        gap: var(--spacing-sm);
+    }
+    
+    .edit-templates-btn {
+        display: inline-flex;
+        align-items: center;
+        gap: var(--spacing-xs);
+        padding: 4px 10px;
+        background: transparent;
+        color: var(--vscode-textLink-foreground);
+        border: 1px solid var(--vscode-textLink-foreground);
+        border-radius: var(--radius-md);
+        font-size: 11px;
+        cursor: pointer;
+        transition: all var(--animation-duration) var(--animation-easing);
+    }
+    
+    .edit-templates-btn:hover {
+        background: var(--vscode-textLink-foreground);
+        color: var(--vscode-editor-background);
+    }
+    
     /* Responsive */
     @media (max-width: 600px) {
         .dialog-container {
@@ -855,6 +941,23 @@ export const getKeyboardHints = () => `
         <div class="keyboard-hint">
             <span class="kbd">Esc</span>
             <span>Cancel</span>
+        </div>
+    </div>
+`;
+
+// Templates section (reusable)
+export const getTemplatesSection = () => `
+    <div class="templates-section" id="templatesSection" style="display: none;">
+        <div class="templates-header">
+            <span class="templates-label">Templates:</span>
+        </div>
+        <div class="templates-chips" id="templatesChips">
+            <!-- Template chips will be rendered here -->
+        </div>
+        <div class="templates-actions">
+            <button class="edit-templates-btn" onclick="openTemplateSettings()">
+                ⚙️ Edit Templates
+            </button>
         </div>
     </div>
 `;
