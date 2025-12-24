@@ -57,8 +57,9 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
             
             panel.webview.html = getCodeReviewTemplate();
             
-            // Load templates for this tool
+            // Load templates for this tool and prepare for display
             const templates = TemplateManager.getTemplatesForTool('reviewCode');
+            const templatesForDisplay = TemplateManager.prepareTemplatesForDisplay(templates);
             const defaultIndices = TemplateManager.getDefaultEnabledIndices('reviewCode');
             
             panel.webview.onDidReceiveMessage(
@@ -71,7 +72,7 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
                                 language,
                                 question,
                                 focusAreas,
-                                templates,
+                                templates: templatesForDisplay,
                                 defaultTemplateIndices: defaultIndices
                             });
                             break;

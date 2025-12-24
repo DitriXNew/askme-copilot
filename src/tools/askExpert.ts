@@ -130,8 +130,9 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
             
             panel.webview.html = getAskExpertTemplate();
             
-            // Load templates for this tool
+            // Load templates for this tool and prepare for display
             const templates = TemplateManager.getTemplatesForTool('askExpert');
+            const templatesForDisplay = TemplateManager.prepareTemplatesForDisplay(templates);
             const defaultIndices = TemplateManager.getDefaultEnabledIndices('askExpert');
             
             panel.webview.onDidReceiveMessage(
@@ -144,7 +145,7 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
                                 question,
                                 context,
                                 previousAnswer,
-                                templates,
+                                templates: templatesForDisplay,
                                 defaultTemplateIndices: defaultIndices
                             });
                             break;

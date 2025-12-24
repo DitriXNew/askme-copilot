@@ -79,9 +79,24 @@ export class TemplateManager {
      * Truncate template title for display (max 30 chars, add "..." if truncated)
      */
     static truncateTitle(title: string, maxLength: number = 30): string {
+        // Handle edge cases
+        if (maxLength < 3) {
+            return title.substring(0, maxLength);
+        }
+        
         if (title.length <= maxLength) {
             return title;
         }
         return title.substring(0, maxLength - 3) + '...';
+    }
+    
+    /**
+     * Prepare templates for webview display (truncate titles)
+     */
+    static prepareTemplatesForDisplay(templates: IResponseTemplate[]): Array<IResponseTemplate & { displayTitle: string }> {
+        return templates.map(template => ({
+            ...template,
+            displayTitle: this.truncateTitle(template.title)
+        }));
     }
 }

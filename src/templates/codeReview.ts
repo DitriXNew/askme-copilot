@@ -186,9 +186,7 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
             
             templatesChips.innerHTML = responseTemplates.map((template, index) => {
                 const isActive = activeTemplateIndices.has(index);
-                const title = template.title.length > 30 
-                    ? template.title.substring(0, 27) + '...' 
-                    : template.title;
+                const title = template.displayTitle || template.title;
                 
                 return \`
                     <div class="template-chip \${isActive ? 'active' : ''}" 

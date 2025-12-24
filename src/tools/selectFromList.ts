@@ -72,8 +72,9 @@ export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
             
             panel.webview.html = getSelectFromListTemplate();
             
-            // Load templates for this tool
+            // Load templates for this tool and prepare for display
             const templates = TemplateManager.getTemplatesForTool('selectFromList');
+            const templatesForDisplay = TemplateManager.prepareTemplatesForDisplay(templates);
             const defaultIndices = TemplateManager.getDefaultEnabledIndices('selectFromList');
             
             panel.webview.onDidReceiveMessage(
@@ -87,7 +88,7 @@ export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
                                 multiSelect,
                                 defaultSelection,
                                 context,
-                                templates,
+                                templates: templatesForDisplay,
                                 defaultTemplateIndices: defaultIndices
                             });
                             break;
