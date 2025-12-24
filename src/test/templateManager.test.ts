@@ -79,7 +79,7 @@ suite('Template Manager Tests', () => {
             const title = 'This is a very long template title that exceeds the maximum length';
             const result = TemplateManager.truncateTitle(title, 30);
             
-            assert.strictEqual(result, 'This is a very long templa...');
+            assert.strictEqual(result, 'This is a very long templat...');
             assert.strictEqual(result.length, 30);
         });
         
