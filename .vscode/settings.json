@@ -1,0 +1,54 @@
+{
+    "askMeCopilot.templates": [
+        {
+            "title": "Consult Expert After Task",
+            "content": "After completing the task - consult with the expert. Update your to-do list if the task requires it, and as the last item, schedule a consultation with the expert.",
+            "enabledByDefault": true,
+            "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+            }
+        },
+        {
+            "title": "Test",
+            "content": "Test ",
+            "enabledByDefault": true,
+            "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+            }
+        },
+        {
+            "title": "Demo",
+            "content": "Demo",
+            "enabledByDefault": false,
+            "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+            }
+        },
+        {
+            "title": "",
+            "content": "",
+            "enabledByDefault": false,
+            "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+            }
+        },
+        {
+            "title": "",
+            "content": "",
+            "enabledByDefault": false,
+            "applyTo": {
+                "askExpert": true,
+                "selectFromList": true,
+                "reviewCode": true
+            }
+        }
+    ]
+}

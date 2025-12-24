@@ -33,15 +33,10 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
             <div id="previousAnswerContent" style="margin-top: 8px;"></div>
         </div>
         
-        ${getTemplatesSection()}
-        
         <div class="answer-section">
             <div class="answer-header">
                 <div class="quick-actions">
-                    <button class="quick-action" onclick="insertTemplate('needs-clarification')">Needs Clarification</button>
-                    <button class="quick-action" onclick="insertTemplate('approve')">Approve</button>
-                    <button class="quick-action" onclick="insertTemplate('reject')">Reject</button>
-                    <button class="quick-action" onclick="insertTemplate('alternative')">Suggest Alternative</button>
+                    ${getTemplatesSection()}
                 </div>
                 <span class="char-counter" id="charCounter">0 characters</span>
             </div>
@@ -97,14 +92,6 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
         let responseTemplates = [];
         let activeTemplateIndices = new Set();
         
-        // Templates for quick actions
-        const templates = {
-            'needs-clarification': 'I need more information. Specifically:\\n\\n1. ',
-            'approve': 'This approach looks good. Proceed with implementation.',
-            'reject': 'I would not recommend this because:\\n\\n1. ',
-            'alternative': 'Instead, I suggest:\\n\\n'
-        };
-        
         // Listen for messages
         window.addEventListener('message', event => {
             const message = event.data;
@@ -122,20 +109,28 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
                     previousAnswerSection.style.display = 'block';
                 }
                 
-                // Handle templates
+                // Handle templates - inline with quick actions
                 if (message.templates && message.templates.length > 0) {
                     responseTemplates = message.templates;
                     if (message.defaultTemplateIndices) {
                         activeTemplateIndices = new Set(message.defaultTemplateIndices);
                     }
                     renderTemplateChips();
-                    templatesSection.style.display = 'block';
                 }
                 
                 if (state.draft) {
                     answerInput.value = state.draft;
                     updateCharCounter();
                 }
+            }
+            
+            // Handle live template updates from Template Editor
+            if (message.command === 'updateTemplates') {
+                responseTemplates = message.templates || [];
+                if (message.defaultTemplateIndices) {
+                    activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                }
+                renderTemplateChips();
             }
         });
         
@@ -192,18 +187,6 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
             updateButtonState();
             saveDraft();
         });
-        
-        function insertTemplate(templateName) {
-            const template = templates[templateName];
-            if (template) {
-                answerInput.value = template;
-                answerInput.focus();
-                answerInput.setSelectionRange(answerInput.value.length, answerInput.value.length);
-                updateCharCounter();
-                updateButtonState();
-                saveDraft();
-            }
-        }
         
         function submit() {
             const text = answerInput.value.trim();

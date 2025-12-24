@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { ISelectFromListParameters } from '../types';
-import { analytics, showNotification, ConfigurationManager, TemplateManager } from '../utils';
+import { analytics, showNotification, ConfigurationManager, TemplateManager, panelRegistry } from '../utils';
 import { getSelectFromListTemplate } from '../templates';
 
 export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
@@ -70,6 +70,9 @@ export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
                 }
             );
             
+            // Register panel for live template updates
+            panelRegistry.register(panel, 'selectFromList');
+            
             panel.webview.html = getSelectFromListTemplate();
             
             // Load templates for this tool and prepare for display
@@ -109,7 +112,7 @@ export class SelectFromListTool extends BaseTool<ISelectFromListParameters> {
                             panel.dispose();
                             break;
                         case 'openSettings':
-                            vscode.commands.executeCommand('workbench.action.openSettings', 'askMeCopilot.templates');
+                            vscode.commands.executeCommand('askMeCopilot.editTemplates');
                             break;
                     }
                 },

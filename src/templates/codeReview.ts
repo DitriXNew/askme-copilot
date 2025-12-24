@@ -100,11 +100,10 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
             ></textarea>
         </div>
         
-        ${getTemplatesSection()}
-        
         <div class="answer-section">
             <div class="answer-header">
                 <span style="font-weight: 500; font-size: 13px;">Your Review:</span>
+                ${getTemplatesSection()}
             </div>
             <textarea 
                 id="reviewInput" 
@@ -167,17 +166,25 @@ export const getCodeReviewTemplate = () => `<!DOCTYPE html>
                     });
                 }
                 
-                // Handle templates
+                // Handle templates - inline with header
                 if (message.templates && message.templates.length > 0) {
                     responseTemplates = message.templates;
                     if (message.defaultTemplateIndices) {
                         activeTemplateIndices = new Set(message.defaultTemplateIndices);
                     }
                     renderTemplateChips();
-                    templatesSection.style.display = 'block';
                 }
                 
                 updateButtonState();
+            }
+            
+            // Handle live template updates from Template Editor
+            if (message.command === 'updateTemplates') {
+                responseTemplates = message.templates || [];
+                if (message.defaultTemplateIndices) {
+                    activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                }
+                renderTemplateChips();
             }
         });
         

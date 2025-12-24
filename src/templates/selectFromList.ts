@@ -96,11 +96,10 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                     <strong>Selected:</strong> <span id="selectedText"></span>
                 </div>
                 
-                ${getTemplatesSection()}
-                
                 <div class="answer-section">
                     <div class="answer-header">
                         <span style="font-weight: 500; font-size: 13px;">Or provide a custom response:</span>
+                        ${getTemplatesSection()}
                     </div>
                     <textarea 
                         id="customInput" 
@@ -182,17 +181,25 @@ export const getSelectFromListTemplate = () => `<!DOCTYPE html>
                 // Update mode indicator
                 modeIndicator.textContent = multiSelect ? 'Multi-select' : 'Single';
                 
-                // Handle templates
+                // Handle templates - inline with header
                 if (message.templates && message.templates.length > 0) {
                     responseTemplates = message.templates;
                     if (message.defaultTemplateIndices) {
                         activeTemplateIndices = new Set(message.defaultTemplateIndices);
                     }
                     renderTemplateChips();
-                    templatesSection.style.display = 'block';
                 }
                 
                 renderOptions(message.options || []);
+            }
+            
+            // Handle live template updates from Template Editor
+            if (message.command === 'updateTemplates') {
+                responseTemplates = message.templates || [];
+                if (message.defaultTemplateIndices) {
+                    activeTemplateIndices = new Set(message.defaultTemplateIndices);
+                }
+                renderTemplateChips();
             }
         });
         

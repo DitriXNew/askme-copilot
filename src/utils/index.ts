@@ -6,3 +6,5 @@ export { ResponseCache, responseCache } from './cache';
 export { playNotificationSound, showNotification } from './notification';
 export { expertMonitorState } from './expertMonitorState';
 export { TemplateManager, ToolType } from './templateManager';
+export { TemplateEditor } from './templateEditor';
+export { panelRegistry } from './panelRegistry';

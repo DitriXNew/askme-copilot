@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { IAskExpertParameters, IExpertResponse } from '../types';
-import { getLogger, analytics, responseCache, showNotification, ConfigurationManager, TemplateManager } from '../utils';
+import { getLogger, analytics, responseCache, showNotification, ConfigurationManager, TemplateManager, panelRegistry } from '../utils';
 import { getAskExpertTemplate } from '../templates';
 
 export class AskExpertTool extends BaseTool<IAskExpertParameters> {
@@ -128,6 +128,9 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
                 }
             );
             
+            // Register panel for live template updates
+            panelRegistry.register(panel, 'askExpert');
+            
             panel.webview.html = getAskExpertTemplate();
             
             // Load templates for this tool and prepare for display
@@ -170,7 +173,7 @@ export class AskExpertTool extends BaseTool<IAskExpertParameters> {
                             panel.dispose();
                             break;
                         case 'openSettings':
-                            vscode.commands.executeCommand('workbench.action.openSettings', 'askMeCopilot.templates');
+                            vscode.commands.executeCommand('askMeCopilot.editTemplates');
                             break;
                     }
                 },

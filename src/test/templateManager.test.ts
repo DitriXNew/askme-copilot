@@ -98,4 +98,69 @@ suite('Template Manager Tests', () => {
             assert(result.endsWith('...'));
         });
     });
+    
+    suite('prepareTemplatesForDisplay', () => {
+        test('should add displayTitle for short titles', () => {
+            const templates = [
+                { 
+                    title: 'Short', 
+                    content: 'Content',
+                    enabledByDefault: false,
+                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true }
+                }
+            ];
+            
+            const result = TemplateManager.prepareTemplatesForDisplay(templates);
+            
+            assert.strictEqual(result[0].displayTitle, 'Short');
+            assert.strictEqual(result[0].title, 'Short');
+            assert.strictEqual(result[0].content, 'Content');
+        });
+        
+        test('should truncate long titles in displayTitle', () => {
+            const templates = [
+                { 
+                    title: 'This is a very long template title that exceeds the limit', 
+                    content: 'Content',
+                    enabledByDefault: false,
+                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true }
+                }
+            ];
+            
+            const result = TemplateManager.prepareTemplatesForDisplay(templates);
+            
+            assert.strictEqual(result[0].displayTitle.length, 30);
+            assert(result[0].displayTitle.endsWith('...'));
+            assert.strictEqual(result[0].title, 'This is a very long template title that exceeds the limit');
+        });
+        
+        test('should handle empty array', () => {
+            const result = TemplateManager.prepareTemplatesForDisplay([]);
+            
+            assert.deepStrictEqual(result, []);
+        });
+        
+        test('should handle multiple templates', () => {
+            const templates = [
+                { 
+                    title: 'First', 
+                    content: 'Content 1',
+                    enabledByDefault: false,
+                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true }
+                },
+                { 
+                    title: 'Second', 
+                    content: 'Content 2',
+                    enabledByDefault: true,
+                    applyTo: { askExpert: true, selectFromList: false, reviewCode: true }
+                }
+            ];
+            
+            const result = TemplateManager.prepareTemplatesForDisplay(templates);
+            
+            assert.strictEqual(result.length, 2);
+            assert.strictEqual(result[0].displayTitle, 'First');
+            assert.strictEqual(result[1].displayTitle, 'Second');
+        });
+    });
 });

@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { IReviewCodeParameters } from '../types';
-import { showNotification, TemplateManager } from '../utils';
+import { showNotification, TemplateManager, panelRegistry } from '../utils';
 import { getCodeReviewTemplate } from '../templates';
 
 export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
@@ -55,6 +55,9 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
                 }
             );
             
+            // Register panel for live template updates
+            panelRegistry.register(panel, 'reviewCode');
+            
             panel.webview.html = getCodeReviewTemplate();
             
             // Load templates for this tool and prepare for display
@@ -93,7 +96,7 @@ export class ReviewCodeTool extends BaseTool<IReviewCodeParameters> {
                             panel.dispose();
                             break;
                         case 'openSettings':
-                            vscode.commands.executeCommand('workbench.action.openSettings', 'askMeCopilot.templates');
+                            vscode.commands.executeCommand('askMeCopilot.editTemplates');
                             break;
                     }
                 },

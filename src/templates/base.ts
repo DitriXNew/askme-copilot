@@ -582,74 +582,21 @@ export const getBaseStyles = () => `
         font-weight: 500;
     }
     
-    /* Template Chips Section */
-    .templates-section {
-        margin-bottom: var(--spacing-lg);
-    }
-    
-    .templates-header {
-        display: flex;
+    /* Template Chips - Inline with quick actions */
+    .templates-inline {
+        display: inline-flex;
         align-items: center;
-        justify-content: space-between;
-        margin-bottom: var(--spacing-sm);
-    }
-    
-    .templates-label {
-        font-weight: 500;
-        font-size: 13px;
-        color: var(--vscode-foreground);
+        gap: var(--spacing-sm);
+        margin-left: var(--spacing-sm);
     }
     
     .templates-chips {
-        display: flex;
+        display: inline-flex;
         flex-wrap: wrap;
-        gap: var(--spacing-sm);
-        margin-bottom: var(--spacing-sm);
+        gap: var(--spacing-xs);
     }
     
     .template-chip {
-        display: inline-flex;
-        align-items: center;
-        gap: var(--spacing-xs);
-        padding: 6px 12px;
-        background: var(--vscode-button-secondaryBackground);
-        color: var(--vscode-button-secondaryForeground);
-        border: 1px solid var(--vscode-button-border, transparent);
-        border-radius: 16px;
-        font-size: 12px;
-        cursor: pointer;
-        transition: all var(--animation-duration) var(--animation-easing);
-        user-select: none;
-    }
-    
-    .template-chip:hover {
-        background: var(--vscode-button-secondaryHoverBackground);
-    }
-    
-    .template-chip.active {
-        background: var(--vscode-button-background);
-        color: var(--vscode-button-foreground);
-        border-color: var(--vscode-focusBorder);
-    }
-    
-    .template-chip-check {
-        font-size: 14px;
-        font-weight: bold;
-    }
-    
-    .template-chip-title {
-        max-width: 200px;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
-    }
-    
-    .templates-actions {
-        display: flex;
-        gap: var(--spacing-sm);
-    }
-    
-    .edit-templates-btn {
         display: inline-flex;
         align-items: center;
         gap: var(--spacing-xs);
@@ -661,11 +608,61 @@ export const getBaseStyles = () => `
         font-size: 11px;
         cursor: pointer;
         transition: all var(--animation-duration) var(--animation-easing);
+        user-select: none;
     }
     
-    .edit-templates-btn:hover {
+    .template-chip:hover {
         background: var(--vscode-textLink-foreground);
         color: var(--vscode-editor-background);
+    }
+    
+    .template-chip.active {
+        background: var(--vscode-button-background);
+        color: var(--vscode-button-foreground);
+        border-color: var(--vscode-button-background);
+    }
+    
+    .template-chip.active:hover {
+        background: var(--vscode-button-hoverBackground);
+        border-color: var(--vscode-button-hoverBackground);
+    }
+    
+    .template-chip-check {
+        font-size: 12px;
+        font-weight: bold;
+    }
+    
+    .template-chip-title {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    
+    .edit-templates-icon {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        width: 24px;
+        height: 24px;
+        background: transparent;
+        color: var(--vscode-descriptionForeground);
+        border: none;
+        border-radius: var(--radius-sm);
+        font-size: 14px;
+        cursor: pointer;
+        transition: all var(--animation-duration) var(--animation-easing);
+    }
+    
+    .edit-templates-icon:hover {
+        color: var(--vscode-textLink-foreground);
+        background: var(--vscode-toolbar-hoverBackground);
+    }
+    
+    .no-templates-hint {
+        font-size: 11px;
+        color: var(--vscode-descriptionForeground);
+        font-style: italic;
     }
     
     /* Responsive */
@@ -945,19 +942,14 @@ export const getKeyboardHints = () => `
     </div>
 `;
 
-// Templates section (reusable)
+// Templates section (reusable) - now inline with quick actions
 export const getTemplatesSection = () => `
-    <div class="templates-section" id="templatesSection" style="display: none;">
-        <div class="templates-header">
-            <span class="templates-label">Templates:</span>
-        </div>
+    <div class="templates-inline" id="templatesSection">
         <div class="templates-chips" id="templatesChips">
             <!-- Template chips will be rendered here -->
         </div>
-        <div class="templates-actions">
-            <button class="edit-templates-btn" onclick="openTemplateSettings()">
-                ⚙️ Edit Templates
-            </button>
-        </div>
+        <button class="edit-templates-icon" onclick="openTemplateSettings()" title="Edit Templates">
+            ⚙️
+        </button>
     </div>
 `;

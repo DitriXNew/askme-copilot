@@ -118,6 +118,20 @@ EACH 10-20 second OF YOUR WORK, CHECK TASK STATUS WITH checkTaskStatus TOOL AND 
 
 ## Features
 
+### Response Templates (v1.7.0)
+
+Automatically append predefined instructions to your responses:
+
+- **Up to 5 reusable templates** per workspace
+- **One-click toggle** via chips in tool dialogs
+- **Per-tool configuration** (askExpert, selectFromList, reviewCode)
+- **Default template included**: "Consult Expert After Task"
+
+**How it works:**
+1. Templates appear as toggleable chips in Ask Expert, Select Options, and Code Review dialogs
+2. Active templates are appended to your response in a structured format
+3. Configure templates in Settings → Extensions → Ask Me Copilot → Templates
+
 ### File Attachments
 - **Click +** to add files to expert dialog
 - **Ctrl+V** to paste images from clipboard
@@ -133,6 +147,7 @@ EACH 10-20 second OF YOUR WORK, CHECK TASK STATUS WITH checkTaskStatus TOOL AND 
 | `enableResponseCache` | `true` | Cache identical questions |
 | `cacheTimeToLive` | `300000` | Cache duration (5 min) |
 | `disableImageCompression` | `false` | Disable all image compression |
+| `templates` | 1 default | Up to 5 response templates with title, content, and per-tool applicability |
 
 ## Commands
 
