@@ -2,7 +2,7 @@
   "name": "ask-me-copilot-tool",
   "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
   "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
-  "version": "1.7.5",
+  "version": "1.8.2",
   "publisher": "DitriX",
   "author": {
     "name": "DitriX",
@@ -473,6 +473,90 @@
             }
           },
           "required": []
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_questionnaire",
+        "displayName": "📋 Questionnaire",
+        "userDescription": "Present a multi-field form questionnaire to collect structured data from expert",
+        "modelDescription": "Use this tool to collect structured data through a questionnaire form with multiple field types. Perfect for: 1) Gathering configuration parameters before generating code, 2) Collecting project specifications with multiple options, 3) Creating setup wizards with conditional fields, 4) Any situation requiring multiple related inputs. Supports field types: text, textarea, number, checkbox, radio, select. Fields can have conditional visibility (showWhen) to show/hide based on other field values. Each field can have an optional comment. Organize fields into sections for clarity.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "form",
+        "icon": "$(list-ordered)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "title": {
+              "type": "string",
+              "description": "Questionnaire title displayed at the top"
+            },
+            "description": {
+              "type": "string",
+              "description": "Optional description explaining the purpose of the questionnaire"
+            },
+            "sections": {
+              "type": "array",
+              "description": "Array of sections, each containing a title and fields",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "title": {
+                    "type": "string",
+                    "description": "Section title"
+                  },
+                  "description": {
+                    "type": "string",
+                    "description": "Optional section description"
+                  },
+                  "fields": {
+                    "type": "array",
+                    "description": "Fields in this section",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "enum": ["text", "textarea", "number", "checkbox", "radio", "select"],
+                          "description": "Field type"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Unique field name for result mapping"
+                        },
+                        "label": {
+                          "type": "string",
+                          "description": "Display label"
+                        },
+                        "placeholder": {
+                          "type": "string",
+                          "description": "Placeholder text for input fields"
+                        },
+                        "defaultValue": {
+                          "description": "Default value (string, number, or boolean depending on type)"
+                        },
+                        "options": {
+                          "type": "array",
+                          "items": { "type": "string" },
+                          "description": "Options for radio/select fields"
+                        },
+                        "showWhen": {
+                          "type": "object",
+                          "description": "Conditional visibility - show when another field has specific value",
+                          "properties": {
+                            "field": { "type": "string", "description": "Field name to check" },
+                            "value": { "description": "Value that triggers visibility" }
+                          }
+                        }
+                      },
+                      "required": ["type", "name", "label"]
+                    }
+                  }
+                },
+                "required": ["title", "fields"]
+              }
+            }
+          },
+          "required": ["title", "sections"]
         }
       }
     ]

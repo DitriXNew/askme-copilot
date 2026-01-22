@@ -92,5 +92,55 @@ export interface IResponseTemplate {
         askExpert: boolean;
         selectFromList: boolean;
         reviewCode: boolean;
+        questionnaire: boolean;
     };
+}
+
+// Questionnaire types
+export type QuestionnaireFieldType = 'text' | 'checkbox' | 'radio' | 'select' | 'number' | 'textarea';
+
+export interface IQuestionnaireField {
+    /** Field type */
+    type: QuestionnaireFieldType;
+    /** Unique field name for result mapping */
+    name: string;
+    /** Display label */
+    label: string;
+    /** Placeholder text */
+    placeholder?: string;
+    /** Default value */
+    defaultValue?: string | number | boolean;
+    /** Options for radio/select fields */
+    options?: string[];
+    /** Conditional display - show when another field has specific value */
+    showWhen?: { field: string; value: string | number | boolean };
+}
+
+export interface IQuestionnaireSection {
+    /** Section title */
+    title: string;
+    /** Section description */
+    description?: string;
+    /** Fields in this section */
+    fields: IQuestionnaireField[];
+}
+
+export interface IQuestionnaireParameters {
+    /** Questionnaire title */
+    title: string;
+    /** Questionnaire description */
+    description?: string;
+    /** Sections with fields */
+    sections: IQuestionnaireSection[];
+}
+
+export interface IQuestionnaireResult {
+    /** Field values by name */
+    values: Record<string, string | number | boolean>;
+    /** Field-specific comments by field name */
+    fieldComments?: Record<string, string>;
+    /** Expert's additional comment */
+    comment?: string;
+    /** Attachments */
+    attachments?: IAttachment[];
 }

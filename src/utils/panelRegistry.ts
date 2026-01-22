@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { TemplateManager } from './templateManager';
 
-type ToolType = 'askExpert' | 'selectFromList' | 'reviewCode';
+type ToolType = 'askExpert' | 'selectFromList' | 'reviewCode' | 'questionnaire';
 
 interface RegisteredPanel {
     panel: vscode.WebviewPanel;

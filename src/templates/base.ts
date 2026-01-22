@@ -928,11 +928,11 @@ export const getAttachmentsSection = () => `
     </div>
 `;
 
-// Keyboard hints section (reusable)
+// Keyboard hints section (reusable) - shows Cmd on Mac, Ctrl on other platforms
 export const getKeyboardHints = () => `
     <div class="keyboard-hints">
         <div class="keyboard-hint">
-            <span class="kbd">Ctrl</span> + <span class="kbd">Enter</span>
+            <span class="kbd" id="modifierKey">Ctrl</span> + <span class="kbd">Enter</span>
             <span>Submit</span>
         </div>
         <div class="keyboard-hint">
@@ -940,6 +940,13 @@ export const getKeyboardHints = () => `
             <span>Cancel</span>
         </div>
     </div>
+    <script>
+        // Detect Mac and update modifier key display
+        if (navigator.platform.toUpperCase().indexOf('MAC') >= 0) {
+            const modifierKeys = document.querySelectorAll('#modifierKey');
+            modifierKeys.forEach(el => el.textContent = 'Cmd');
+        }
+    </script>
 `;
 
 // Templates section (reusable) - now inline with quick actions

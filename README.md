@@ -20,7 +20,7 @@ Copilot's default behavior causes issues:
 
 ## The Solution
 
-This extension adds **6 tools** for Copilot to communicate with you:
+This extension adds **7 tools** for Copilot to communicate with you:
 
 | Tool | When Copilot Uses It |
 |------|---------------------|
@@ -30,6 +30,7 @@ This extension adds **6 tools** for Copilot to communicate with you:
 | ⚠️ **Confirm Action** | Before deletions, schema changes, breaking changes |
 | 🖼️ **Read Image** | Analyze mockups, diagrams, icons in your project |
 | 📊 **Check Task Status** | Get messages from expert, respect pause, check if consultation needed |
+| 📋 **Questionnaire** | Multi-field forms for structured data collection |
 
 ### 🧠 Ask Expert
 
@@ -61,7 +62,49 @@ Copilot analyzes images from your project with compression support:
 
 ![Read Image Tool](docs/ImageReader.png)
 
-### 📊 Expert Monitor Panel (v1.6.0)
+### � Questionnaire (v1.8.0)
+
+Collect structured data via multi-field forms:
+
+**Field Types:**
+- **Text** - Single-line text input
+- **Textarea** - Multi-line text input
+- **Number** - Numeric input
+- **Checkbox** - Yes/No toggle
+- **Radio** - Single choice from options
+- **Select** - Dropdown selection
+
+**Features:**
+- **Conditional fields** - Show/hide fields based on other field values (`showWhen`)
+- **Sections** - Group related fields with titles and descriptions
+- **Additional comment** - Free-form text field at the bottom
+- **Attachments** - Add files/images to your response
+- **Templates** - Use response templates like in other tools
+
+**Example call:**
+```typescript
+{
+  title: "Project Configuration",
+  sections: [
+    {
+      title: "Basic Info",
+      fields: [
+        { type: "text", name: "projectName", label: "Project Name" },
+        { type: "checkbox", name: "useTypescript", label: "Use TypeScript?" },
+        { 
+          type: "radio", 
+          name: "strictMode", 
+          label: "Strict Mode",
+          options: ["strict", "moderate", "relaxed"],
+          showWhen: { field: "useTypescript", value: true }
+        }
+      ]
+    }
+  ]
+}
+```
+
+### �📊 Expert Monitor Panel (v1.6.0)
 
 A **persistent panel** (next to Terminal) for real-time communication with Copilot:
 
