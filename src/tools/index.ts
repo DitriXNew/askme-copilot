@@ -6,3 +6,4 @@ export { ReviewCodeTool } from './reviewCode';
 export { ConfirmActionTool } from './confirmAction';
 export { ReadImageTool } from './readImage';
 export { CheckTaskStatusTool } from './checkTaskStatus';
+export { QuestionnaireTool } from './questionnaire';

@@ -92,7 +92,8 @@ export class TemplateEditor {
             applyTo: {
                 askExpert: true,
                 selectFromList: true,
-                reviewCode: true
+                reviewCode: true,
+                questionnaire: true
             }
         };
     }

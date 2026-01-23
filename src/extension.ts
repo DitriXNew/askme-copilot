@@ -8,7 +8,8 @@ import {
     ReviewCodeTool, 
     ConfirmActionTool, 
     ReadImageTool,
-    CheckTaskStatusTool
+    CheckTaskStatusTool,
+    QuestionnaireTool
 } from './tools';
 import { ExpertMonitorViewProvider } from './views';
 
@@ -50,6 +51,7 @@ export function activate(context: vscode.ExtensionContext) {
     const confirmActionTool = new ConfirmActionTool(context);
     const readImageTool = new ReadImageTool(context);
     const checkTaskStatusTool = new CheckTaskStatusTool(context);
+    const questionnaireTool = new QuestionnaireTool(context);
     
     context.subscriptions.push(
         vscode.lm.registerTool('ask-me-copilot-tool_askExpert', askExpertTool),
@@ -57,13 +59,21 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.lm.registerTool('ask-me-copilot-tool_reviewCode', reviewCodeTool),
         vscode.lm.registerTool('ask-me-copilot-tool_confirmAction', confirmActionTool),
         vscode.lm.registerTool('ask-me-copilot-tool_readImage', readImageTool),
-        vscode.lm.registerTool('ask-me-copilot-tool_checkTaskStatus', checkTaskStatusTool)
+        vscode.lm.registerTool('ask-me-copilot-tool_checkTaskStatus', checkTaskStatusTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_questionnaire', questionnaireTool)
     );
     
     logger.info('✅ Registered all language model tools');
     
     // Register commands
     context.subscriptions.push(
+        vscode.commands.registerCommand('askMeCopilot.focusExpertPanel', () => {
+            const focused = panelRegistry.focusMostRecentPanel();
+            if (!focused) {
+                vscode.window.showInformationMessage('No active Ask Me Copilot panel to focus');
+            }
+        }),
+        
         vscode.commands.registerCommand('askMeCopilot.showMetrics', () => {
             const metrics = analytics.getMetrics();
             vscode.window.showInformationMessage(

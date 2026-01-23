@@ -52,9 +52,9 @@ jobs:
               throw new Error('Missing required package.json fields');
             }
             
-            // Validate MCP tools
-            if (!pkg.contributes.languageModelTools || pkg.contributes.languageModelTools.length !== 6) {
-              throw new Error('Expected exactly 6 language model tools');
+            // Validate MCP tools (7 tools: askExpert, selectFromList, reviewCode, confirmAction, readImage, checkTaskStatus, questionnaire)
+            if (!pkg.contributes.languageModelTools || pkg.contributes.languageModelTools.length !== 7) {
+              throw new Error('Expected exactly 7 language model tools');
             }
             
             console.log('✅ Package.json validation passed');

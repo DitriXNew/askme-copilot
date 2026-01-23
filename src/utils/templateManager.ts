@@ -2,7 +2,7 @@
 import * as vscode from 'vscode';
 import { IResponseTemplate } from '../types';
 
-export type ToolType = 'askExpert' | 'selectFromList' | 'reviewCode';
+export type ToolType = 'askExpert' | 'selectFromList' | 'reviewCode' | 'questionnaire';
 
 export class TemplateManager {
     private static readonly CONFIG_SECTION = 'askMeCopilot';

@@ -379,6 +379,196 @@ function authenticateUser(username: string, password: string): boolean {
             assert.strictEqual(result.shouldBlock, true);
         });
     });
+    
+    suite('Questionnaire Tool Simulation', () => {
+        const testCases: MockToolCall[] = [
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Project Configuration',
+                    description: 'Configure your new project',
+                    sections: [
+                        {
+                            title: 'Basic Info',
+                            fields: [
+                                { type: 'text', name: 'projectName', label: 'Project Name' },
+                                { type: 'checkbox', name: 'useTypescript', label: 'Use TypeScript?' }
+                            ]
+                        }
+                    ]
+                },
+                expectedOutput: 'Expert completed questionnaire:',
+                shouldSucceed: true
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Database Setup',
+                    sections: [
+                        {
+                            title: 'Connection',
+                            fields: [
+                                { type: 'select', name: 'dbType', label: 'Database Type', options: ['PostgreSQL', 'MySQL', 'SQLite'] },
+                                { type: 'text', name: 'host', label: 'Host' },
+                                { type: 'number', name: 'port', label: 'Port' }
+                            ]
+                        },
+                        {
+                            title: 'Advanced',
+                            fields: [
+                                { type: 'checkbox', name: 'useSSL', label: 'Use SSL' },
+                                { type: 'textarea', name: 'customConfig', label: 'Custom Configuration' }
+                            ]
+                        }
+                    ]
+                },
+                expectedOutput: 'Expert completed questionnaire:',
+                shouldSucceed: true
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Conditional Fields',
+                    sections: [
+                        {
+                            title: 'Settings',
+                            fields: [
+                                { type: 'checkbox', name: 'enableAuth', label: 'Enable Authentication' },
+                                { 
+                                    type: 'radio', 
+                                    name: 'authType', 
+                                    label: 'Auth Type',
+                                    options: ['JWT', 'OAuth', 'Basic'],
+                                    showWhen: { field: 'enableAuth', value: true }
+                                }
+                            ]
+                        }
+                    ]
+                },
+                expectedOutput: 'Expert completed questionnaire:',
+                shouldSucceed: true
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: '' // Invalid: empty title
+                },
+                expectedOutput: '❌ Error:',
+                shouldSucceed: false
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Test',
+                    sections: [] // Invalid: empty sections
+                },
+                expectedOutput: '❌ Error:',
+                shouldSucceed: false
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Test',
+                    sections: [{ fields: [] }] // Invalid: section without title
+                },
+                expectedOutput: '❌ Error:',
+                shouldSucceed: false
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Test',
+                    sections: [{ 
+                        title: 'Section',
+                        fields: [{ name: 'test' }] // Invalid: field without type and label
+                    }]
+                },
+                expectedOutput: '❌ Error:',
+                shouldSucceed: false
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Test',
+                    sections: [{ 
+                        title: 'Section',
+                        fields: [{ name: 'test', type: 'invalid', label: 'Test' }] // Invalid: wrong type
+                    }]
+                },
+                expectedOutput: '❌ Error:',
+                shouldSucceed: false
+            },
+            {
+                toolName: 'ask-me-copilot-tool_questionnaire',
+                input: {
+                    title: 'Test',
+                    sections: [{ 
+                        title: 'Section',
+                        fields: [{ name: 'test', type: 'radio', label: 'Test' }] // Invalid: radio without options
+                    }]
+                },
+                expectedOutput: '❌ Error:',
+                shouldSucceed: false
+            }
+        ];
+        
+        testCases.forEach((testCase, index) => {
+            test(`should handle questionnaire call #${index + 1}: ${testCase.shouldSucceed ? 'SUCCESS' : 'FAILURE'}`, () => {
+                const result = simulateToolCall(testCase);
+                
+                if (testCase.shouldSucceed) {
+                    assert.ok(result.success, `Expected success but got: ${result.error}`);
+                    assert.ok(result.output?.includes(testCase.expectedOutput || ''), 
+                        `Expected output to contain "${testCase.expectedOutput}", got: ${result.output}`);
+                } else {
+                    assert.ok(!result.success, `Expected failure but got success`);
+                    assert.ok(result.output?.includes(testCase.expectedOutput || ''), 
+                        `Expected error message to contain "${testCase.expectedOutput}", got: ${result.output}`);
+                }
+            });
+        });
+        
+        test('should handle questionnaire with all field types', () => {
+            const result = simulateQuestionnaire({
+                title: 'All Fields Test',
+                sections: [{
+                    title: 'All Types',
+                    fields: [
+                        { type: 'text', name: 'textField', label: 'Text' },
+                        { type: 'textarea', name: 'textareaField', label: 'Textarea' },
+                        { type: 'number', name: 'numberField', label: 'Number' },
+                        { type: 'checkbox', name: 'checkboxField', label: 'Checkbox' },
+                        { type: 'radio', name: 'radioField', label: 'Radio', options: ['A', 'B'] },
+                        { type: 'select', name: 'selectField', label: 'Select', options: ['X', 'Y'] }
+                    ]
+                }]
+            });
+            
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('textField'));
+            assert.ok(result.output?.includes('numberField'));
+        });
+        
+        test('should format result with field comments', () => {
+            const result = simulateQuestionnaireWithResult({
+                title: 'Test',
+                sections: [{
+                    title: 'Section',
+                    fields: [{ type: 'text', name: 'name', label: 'Name' }]
+                }]
+            }, {
+                values: { name: 'TestProject' },
+                fieldComments: { name: 'Use lowercase in production' },
+                comment: 'Additional notes here'
+            });
+            
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('name: TestProject'));
+            assert.ok(result.output?.includes('Comment: Use lowercase in production'));
+            assert.ok(result.output?.includes('**Additional Comment:**'));
+            assert.ok(result.output?.includes('Additional notes here'));
+        });
+    });
 });
 
 /**
@@ -402,6 +592,8 @@ function simulateToolCall(testCase: MockToolCall): { success: boolean; output?: 
                     shouldAskExpert: false,
                     messages: []
                 });
+            case 'ask-me-copilot-tool_questionnaire':
+                return simulateQuestionnaire(testCase.input);
             default:
                 return { success: false, error: 'Unknown tool' };
         }
@@ -530,4 +722,109 @@ function simulateCheckTaskStatus(input: any, state: {
         output: results.join('\n'),
         shouldBlock: false
     };
+}
+
+function simulateQuestionnaire(input: any): { success: boolean; output?: string; error?: string } {
+    // Validate required fields
+    const validationError = validateInput(input, ['title', 'sections']);
+    if (validationError) {
+        return { success: false, output: `❌ Error: ${validationError}` };
+    }
+    
+    // Validate sections structure
+    if (!Array.isArray(input.sections) || input.sections.length === 0) {
+        return { success: false, output: '❌ Error: Sections must be a non-empty array' };
+    }
+    
+    for (const section of input.sections) {
+        if (!section.title || !Array.isArray(section.fields)) {
+            return { success: false, output: '❌ Error: Each section must have a title and fields array' };
+        }
+        
+        for (const field of section.fields) {
+            if (!field.name || !field.type || !field.label) {
+                return { success: false, output: '❌ Error: Each field must have name, type, and label' };
+            }
+            
+            const validTypes = ['text', 'checkbox', 'radio', 'select', 'number', 'textarea'];
+            if (!validTypes.includes(field.type)) {
+                return { success: false, output: `❌ Error: Invalid field type: ${field.type}` };
+            }
+            
+            if ((field.type === 'radio' || field.type === 'select') && (!field.options || field.options.length === 0)) {
+                return { success: false, output: `❌ Error: Field "${field.name}" of type "${field.type}" requires options array` };
+            }
+        }
+    }
+    
+    // Simulate successful questionnaire completion
+    const values: Record<string, any> = {};
+    for (const section of input.sections) {
+        for (const field of section.fields) {
+            switch (field.type) {
+                case 'text':
+                case 'textarea':
+                    values[field.name] = field.defaultValue || 'Sample value';
+                    break;
+                case 'number':
+                    values[field.name] = field.defaultValue || 42;
+                    break;
+                case 'checkbox':
+                    values[field.name] = field.defaultValue || true;
+                    break;
+                case 'radio':
+                case 'select':
+                    values[field.name] = field.defaultValue || field.options[0];
+                    break;
+            }
+        }
+    }
+    
+    let output = 'Expert completed questionnaire:\n\n**Values:**\n';
+    for (const [key, value] of Object.entries(values)) {
+        output += `- ${key}: ${value}\n`;
+    }
+    
+    return { success: true, output };
+}
+
+function simulateQuestionnaireWithResult(input: any, result: {
+    values: Record<string, any>;
+    fieldComments?: Record<string, string>;
+    comment?: string;
+}): { success: boolean; output?: string; error?: string } {
+    // Validate input first
+    const validationResult = simulateQuestionnaire(input);
+    if (!validationResult.success) {
+        return validationResult;
+    }
+    
+    // Format result like the actual tool does
+    let output = 'Expert completed questionnaire:\n\n**Values:**\n';
+    
+    for (const [key, value] of Object.entries(result.values)) {
+        if (value !== '' && value !== false) {
+            output += `- ${key}: ${value}`;
+            if (result.fieldComments && result.fieldComments[key]) {
+                output += ` *(Comment: ${result.fieldComments[key]})*`;
+            }
+            output += '\n';
+        }
+    }
+    
+    // Add standalone comments for empty/false fields
+    if (result.fieldComments) {
+        for (const [key, comment] of Object.entries(result.fieldComments)) {
+            const value = result.values[key];
+            if (value === '' || value === false) {
+                output += `- ${key}: *(Comment: ${comment})*\n`;
+            }
+        }
+    }
+    
+    if (result.comment) {
+        output += `\n**Additional Comment:**\n${result.comment}\n`;
+    }
+    
+    return { success: true, output };
 }

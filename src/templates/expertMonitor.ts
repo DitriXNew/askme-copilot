@@ -384,7 +384,7 @@ export const getExpertMonitorTemplate = () => `
                     <textarea 
                         id="messageInput" 
                         class="message-input" 
-                        placeholder="Type a message for Copilot... (Ctrl+Enter to send, Ctrl+V to paste image)"
+                        placeholder="Type a message for Copilot..."
                         rows="2"
                     ></textarea>
                     <div id="attachmentBadges" class="attachment-badges"></div>
@@ -436,6 +436,11 @@ export const getExpertMonitorTemplate = () => `
         
         // Initialize
         function init() {
+            // Set placeholder with correct modifier key for platform
+            const isMac = navigator.platform.toUpperCase().indexOf('MAC') >= 0;
+            const modKey = isMac ? 'Cmd' : 'Ctrl';
+            messageInput.placeholder = \`Type a message for Copilot... (\${modKey}+Enter to send, \${modKey}+V to paste image)\`;
+            
             // Toggle handlers
             pauseToggle.addEventListener('click', () => togglePause());
             pauseToggle.addEventListener('keydown', (e) => {
@@ -456,7 +461,7 @@ export const getExpertMonitorTemplate = () => `
             // Input handlers
             messageInput.addEventListener('input', updateSendButton);
             messageInput.addEventListener('keydown', (e) => {
-                if (e.key === 'Enter' && e.ctrlKey) {
+                if (e.key === 'Enter' && (e.ctrlKey || e.metaKey)) {
                     e.preventDefault();
                     sendMessage();
                 }

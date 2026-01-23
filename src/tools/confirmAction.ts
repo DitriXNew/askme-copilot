@@ -23,17 +23,21 @@ export class ConfirmActionTool extends BaseTool<IConfirmActionParameters> {
         const result = await vscode.window.showWarningMessage(
             `⚠️ Copilot wants to: ${message}`,
             { modal: true },
-            'Proceed',
-            'Cancel'
+            'Confirm',
+            'Reject'
         );
         
-        if (result === 'Proceed') {
+        if (result === 'Confirm') {
             return new vscode.LanguageModelToolResult([
                 new vscode.LanguageModelTextPart('✅ Expert confirmed action')
             ]);
+        } else if (result === 'Reject') {
+            return new vscode.LanguageModelToolResult([
+                new vscode.LanguageModelTextPart('❌ Expert explicitly rejected action')
+            ]);
         } else {
             return new vscode.LanguageModelToolResult([
-                new vscode.LanguageModelTextPart('❌ Expert rejected action')
+                new vscode.LanguageModelTextPart('⏹️ Expert cancelled action (dismissed dialog)')
             ]);
         }
     }

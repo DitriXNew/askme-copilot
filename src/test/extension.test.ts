@@ -484,4 +484,275 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             assert.strictEqual(result2.invocationMessage, '📊 Checking task status (After completing file edit)...');
         });
     });
+    
+    suite('QuestionnaireTool Tests', () => {
+        test('should validate required parameters', () => {
+            const validateInput = (input: any, requiredFields: string[]): string | null => {
+                if (!input || typeof input !== 'object') {
+                    return 'Invalid input parameters. Expected an object.';
+                }
+                
+                for (const field of requiredFields) {
+                    if (!(field in input)) {
+                        return `Missing required field: "${field}"`;
+                    }
+                    
+                    const value = input[field];
+                    if (value === null || value === undefined) {
+                        return `Field "${field}" cannot be null or undefined`;
+                    }
+                    
+                    if (typeof value === 'string' && value.trim() === '') {
+                        return `Field "${field}" cannot be empty`;
+                    }
+                }
+                
+                return null;
+            };
+            
+            assert.strictEqual(validateInput({}, ['title', 'sections']), 'Missing required field: "title"');
+            assert.strictEqual(validateInput({ title: 'Test' }, ['title', 'sections']), 'Missing required field: "sections"');
+            assert.strictEqual(validateInput({ title: '', sections: [] }, ['title', 'sections']), 'Field "title" cannot be empty');
+            assert.strictEqual(validateInput({ title: 'Test', sections: [] }, ['title', 'sections']), null);
+        });
+        
+        test('should validate sections structure', () => {
+            const validateSections = (sections: any[]): string | null => {
+                if (!Array.isArray(sections) || sections.length === 0) {
+                    return 'Sections must be a non-empty array';
+                }
+                
+                for (const section of sections) {
+                    if (!section.title || !Array.isArray(section.fields)) {
+                        return 'Each section must have a title and fields array';
+                    }
+                    
+                    for (const field of section.fields) {
+                        if (!field.name || !field.type || !field.label) {
+                            return 'Each field must have name, type, and label';
+                        }
+                        
+                        const validTypes = ['text', 'checkbox', 'radio', 'select', 'number', 'textarea'];
+                        if (!validTypes.includes(field.type)) {
+                            return `Invalid field type: ${field.type}`;
+                        }
+                        
+                        if ((field.type === 'radio' || field.type === 'select') && (!field.options || field.options.length === 0)) {
+                            return `Field "${field.name}" of type "${field.type}" requires options array`;
+                        }
+                    }
+                }
+                
+                return null;
+            };
+            
+            // Empty array
+            assert.strictEqual(validateSections([]), 'Sections must be a non-empty array');
+            
+            // Section without title
+            assert.strictEqual(validateSections([{ fields: [] }]), 'Each section must have a title and fields array');
+            
+            // Section without fields
+            assert.strictEqual(validateSections([{ title: 'Test' }]), 'Each section must have a title and fields array');
+            
+            // Field without required properties
+            assert.strictEqual(
+                validateSections([{ title: 'Test', fields: [{ name: 'test' }] }]),
+                'Each field must have name, type, and label'
+            );
+            
+            // Invalid field type
+            assert.strictEqual(
+                validateSections([{ title: 'Test', fields: [{ name: 'test', type: 'invalid', label: 'Test' }] }]),
+                'Invalid field type: invalid'
+            );
+            
+            // Radio without options
+            assert.strictEqual(
+                validateSections([{ title: 'Test', fields: [{ name: 'test', type: 'radio', label: 'Test' }] }]),
+                'Field "test" of type "radio" requires options array'
+            );
+            
+            // Select without options
+            assert.strictEqual(
+                validateSections([{ title: 'Test', fields: [{ name: 'test', type: 'select', label: 'Test', options: [] }] }]),
+                'Field "test" of type "select" requires options array'
+            );
+            
+            // Valid sections
+            assert.strictEqual(
+                validateSections([{ 
+                    title: 'Test', 
+                    fields: [
+                        { name: 'text1', type: 'text', label: 'Text Field' },
+                        { name: 'check1', type: 'checkbox', label: 'Checkbox' },
+                        { name: 'radio1', type: 'radio', label: 'Radio', options: ['A', 'B'] },
+                        { name: 'select1', type: 'select', label: 'Select', options: ['X', 'Y'] },
+                        { name: 'num1', type: 'number', label: 'Number' },
+                        { name: 'area1', type: 'textarea', label: 'Textarea' }
+                    ] 
+                }]),
+                null
+            );
+        });
+        
+        test('should validate conditional showWhen logic', () => {
+            const shouldShowField = (field: any, values: Record<string, any>): boolean => {
+                if (!field.showWhen) {
+                    return true;
+                }
+                
+                const { field: dependsOn, value: requiredValue } = field.showWhen;
+                const currentValue = values[dependsOn];
+                
+                return currentValue === requiredValue;
+            };
+            
+            const testField = { 
+                name: 'strictMode', 
+                type: 'radio', 
+                label: 'Strict Mode',
+                showWhen: { field: 'useTypescript', value: true }
+            };
+            
+            // Should not show when condition not met
+            assert.strictEqual(shouldShowField(testField, { useTypescript: false }), false);
+            assert.strictEqual(shouldShowField(testField, {}), false);
+            
+            // Should show when condition is met
+            assert.strictEqual(shouldShowField(testField, { useTypescript: true }), true);
+            
+            // Field without showWhen should always show
+            assert.strictEqual(shouldShowField({ name: 'test', type: 'text', label: 'Test' }, {}), true);
+        });
+        
+        test('should prepare invocation with section and field count', () => {
+            const prepareInvocation = (options: any) => {
+                const sectionCount = options.input.sections?.length || 0;
+                const fieldCount = options.input.sections?.reduce(
+                    (acc: number, s: any) => acc + (s.fields?.length || 0), 
+                    0
+                ) || 0;
+                
+                return {
+                    invocationMessage: `📋 Opening questionnaire: "${options.input.title}"`,
+                    confirmationMessages: {
+                        title: 'Questionnaire',
+                        message: `Questionnaire with ${sectionCount} section(s) and ${fieldCount} field(s)`
+                    }
+                };
+            };
+            
+            const result = prepareInvocation({
+                input: {
+                    title: 'Project Configuration',
+                    sections: [
+                        { title: 'Basic', fields: [{ name: 'a' }, { name: 'b' }] },
+                        { title: 'Advanced', fields: [{ name: 'c' }] }
+                    ]
+                }
+            });
+            
+            assert.strictEqual(result.invocationMessage, '📋 Opening questionnaire: "Project Configuration"');
+            assert.ok(result.confirmationMessages.message.includes('2 section(s)'));
+            assert.ok(result.confirmationMessages.message.includes('3 field(s)'));
+        });
+        
+        test('should format result with field comments', () => {
+            const formatResult = (result: {
+                values: Record<string, any>;
+                fieldComments?: Record<string, string>;
+                comment?: string;
+            }): string => {
+                let responseText = 'Expert completed questionnaire:\n\n';
+                
+                responseText += '**Values:**\n';
+                for (const [key, value] of Object.entries(result.values)) {
+                    if (value !== '' && value !== false) {
+                        responseText += `- ${key}: ${value}`;
+                        if (result.fieldComments && result.fieldComments[key]) {
+                            responseText += ` *(Comment: ${result.fieldComments[key]})*`;
+                        }
+                        responseText += '\n';
+                    }
+                }
+                
+                // Add standalone comments for empty/false fields
+                if (result.fieldComments) {
+                    for (const [key, comment] of Object.entries(result.fieldComments)) {
+                        const value = result.values[key];
+                        if (value === '' || value === false) {
+                            responseText += `- ${key}: *(Comment: ${comment})*\n`;
+                        }
+                    }
+                }
+                
+                if (result.comment) {
+                    responseText += `\n**Additional Comment:**\n${result.comment}\n`;
+                }
+                
+                return responseText;
+            };
+            
+            // Test with values and field comments
+            const result1 = formatResult({
+                values: { projectName: 'MyApp', useTypescript: true, database: 'postgres' },
+                fieldComments: { projectName: 'Use lowercase in production' },
+                comment: 'Overall comment here'
+            });
+            
+            assert.ok(result1.includes('projectName: MyApp'));
+            assert.ok(result1.includes('Comment: Use lowercase in production'));
+            assert.ok(result1.includes('useTypescript: true'));
+            assert.ok(result1.includes('database: postgres'));
+            assert.ok(result1.includes('**Additional Comment:**'));
+            assert.ok(result1.includes('Overall comment here'));
+            
+            // Test with comment on empty field
+            const result2 = formatResult({
+                values: { enabled: false },
+                fieldComments: { enabled: 'Disabled for security reasons' }
+            });
+            
+            assert.ok(result2.includes('enabled: *(Comment: Disabled for security reasons)*'));
+        });
+        
+        test('should handle all field types', () => {
+            const getDefaultValue = (field: any): any => {
+                switch (field.type) {
+                    case 'text':
+                    case 'textarea':
+                        return field.defaultValue || '';
+                    case 'number':
+                        return field.defaultValue !== undefined ? field.defaultValue : 0;
+                    case 'checkbox':
+                        return field.defaultValue || false;
+                    case 'radio':
+                    case 'select':
+                        return field.defaultValue || (field.options ? field.options[0] : '');
+                    default:
+                        return '';
+                }
+            };
+            
+            // Test each field type
+            assert.strictEqual(getDefaultValue({ type: 'text' }), '');
+            assert.strictEqual(getDefaultValue({ type: 'text', defaultValue: 'hello' }), 'hello');
+            
+            assert.strictEqual(getDefaultValue({ type: 'textarea' }), '');
+            assert.strictEqual(getDefaultValue({ type: 'textarea', defaultValue: 'multiline' }), 'multiline');
+            
+            assert.strictEqual(getDefaultValue({ type: 'number' }), 0);
+            assert.strictEqual(getDefaultValue({ type: 'number', defaultValue: 42 }), 42);
+            
+            assert.strictEqual(getDefaultValue({ type: 'checkbox' }), false);
+            assert.strictEqual(getDefaultValue({ type: 'checkbox', defaultValue: true }), true);
+            
+            assert.strictEqual(getDefaultValue({ type: 'radio', options: ['A', 'B'] }), 'A');
+            assert.strictEqual(getDefaultValue({ type: 'radio', options: ['A', 'B'], defaultValue: 'B' }), 'B');
+            
+            assert.strictEqual(getDefaultValue({ type: 'select', options: ['X', 'Y'] }), 'X');
+            assert.strictEqual(getDefaultValue({ type: 'select', options: ['X', 'Y'], defaultValue: 'Y' }), 'Y');
+        });
+    });
 });

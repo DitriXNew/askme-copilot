@@ -236,7 +236,7 @@ export const getAskExpertTemplate = () => `<!DOCTYPE html>
         
         // Keyboard shortcuts
         document.addEventListener('keydown', (e) => {
-            if (e.ctrlKey && e.key === 'Enter') {
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
                 e.preventDefault();
                 submit();
             } else if (e.key === 'Escape' && !document.getElementById('previewModal').classList.contains('visible')) {

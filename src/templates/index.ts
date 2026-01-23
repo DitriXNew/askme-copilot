@@ -4,3 +4,4 @@ export { getAskExpertTemplate } from './askExpert';
 export { getSelectFromListTemplate } from './selectFromList';
 export { getCodeReviewTemplate } from './codeReview';
 export { getExpertMonitorTemplate, getExpertMonitorStyles } from './expertMonitor';
+export { getQuestionnaireTemplate } from './questionnaire';

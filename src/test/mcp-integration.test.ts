@@ -27,7 +27,7 @@ suite('MCP Integration Tests', () => {
 		const languageModelTools = extension.packageJSON.contributes?.languageModelTools;
 		assert.ok(languageModelTools, 'Extension should define language model tools');
 		assert.ok(Array.isArray(languageModelTools), 'Language model tools should be an array');
-		assert.strictEqual(languageModelTools.length, 6, 'Should have 6 language model tools');
+		assert.strictEqual(languageModelTools.length, 7, 'Should have 7 language model tools');
 		
 		// Verify specific tools exist (using the actual 'name' field)
 		const toolNames = languageModelTools.map((tool: any) => tool.name);
@@ -37,6 +37,7 @@ suite('MCP Integration Tests', () => {
 		assert.ok(toolNames.includes('ask-me-copilot-tool_confirmAction'), 'Should include confirmAction tool');
 		assert.ok(toolNames.includes('ask-me-copilot-tool_readImage'), 'Should include readImage tool');
 		assert.ok(toolNames.includes('ask-me-copilot-tool_checkTaskStatus'), 'Should include checkTaskStatus tool');
+		assert.ok(toolNames.includes('ask-me-copilot-tool_questionnaire'), 'Should include questionnaire tool');
 	});
 
 	test('MCP tools should have valid schemas', () => {
@@ -112,6 +113,21 @@ suite('MCP Integration Tests', () => {
 		const schema = confirmActionTool.inputSchema;
 		assert.ok(schema.properties.action, 'confirmAction should have action property');
 		assert.ok(schema.required.includes('action'), 'confirmAction should require action field');
+	});
+
+	test('questionnaire tool should have correct schema', () => {
+		const extension = vscode.extensions.getExtension('DitriX.ask-me-copilot-tool');
+		const languageModelTools = extension!.packageJSON.contributes?.languageModelTools;
+		const questionnaireTool = languageModelTools.find((tool: any) => tool.name === 'ask-me-copilot-tool_questionnaire');
+		
+		assert.ok(questionnaireTool, 'questionnaire tool should exist');
+		assert.strictEqual(questionnaireTool.displayName, '📋 Questionnaire', 'questionnaire should have correct display name');
+		
+		const schema = questionnaireTool.inputSchema;
+		assert.ok(schema.properties.title, 'questionnaire should have title property');
+		assert.ok(schema.properties.sections, 'questionnaire should have sections property');
+		assert.ok(schema.required.includes('title'), 'questionnaire should require title field');
+		assert.ok(schema.required.includes('sections'), 'questionnaire should require sections field');
 	});
 
 	test('VS Code API should be available for UI testing', () => {

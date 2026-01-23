@@ -106,7 +106,7 @@ suite('Template Manager Tests', () => {
                     title: 'Short', 
                     content: 'Content',
                     enabledByDefault: false,
-                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true }
+                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true, questionnaire: true }
                 }
             ];
             
@@ -123,7 +123,7 @@ suite('Template Manager Tests', () => {
                     title: 'This is a very long template title that exceeds the limit', 
                     content: 'Content',
                     enabledByDefault: false,
-                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true }
+                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true, questionnaire: true }
                 }
             ];
             
@@ -146,13 +146,13 @@ suite('Template Manager Tests', () => {
                     title: 'First', 
                     content: 'Content 1',
                     enabledByDefault: false,
-                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true }
+                    applyTo: { askExpert: true, selectFromList: true, reviewCode: true, questionnaire: true }
                 },
                 { 
                     title: 'Second', 
                     content: 'Content 2',
                     enabledByDefault: true,
-                    applyTo: { askExpert: true, selectFromList: false, reviewCode: true }
+                    applyTo: { askExpert: true, selectFromList: false, reviewCode: true, questionnaire: true }
                 }
             ];
             
