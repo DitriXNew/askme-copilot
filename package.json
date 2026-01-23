@@ -9,7 +9,7 @@
     "email": "ditrixnew@gmail.com"
   },
   "engines": {
-    "vscode": "^1.106.0"
+    "vscode": "^1.108.0"
   },
   "categories": [
     "AI",
@@ -281,10 +281,19 @@
                     "description": "Apply to Review Code tool"
                   }
                 },
-                "required": ["askExpert", "selectFromList", "reviewCode"]
+                "required": [
+                  "askExpert",
+                  "selectFromList",
+                  "reviewCode"
+                ]
               }
             },
-            "required": ["title", "content", "enabledByDefault", "applyTo"]
+            "required": [
+              "title",
+              "content",
+              "enabledByDefault",
+              "applyTo"
+            ]
           },
           "description": "Up to 5 reusable instruction templates that can be automatically appended to responses. Templates with empty title or content will be ignored."
         }
@@ -534,7 +543,14 @@
                       "properties": {
                         "type": {
                           "type": "string",
-                          "enum": ["text", "textarea", "number", "checkbox", "radio", "select"],
+                          "enum": [
+                            "text",
+                            "textarea",
+                            "number",
+                            "checkbox",
+                            "radio",
+                            "select"
+                          ],
                           "description": "Field type"
                         },
                         "name": {
@@ -554,27 +570,44 @@
                         },
                         "options": {
                           "type": "array",
-                          "items": { "type": "string" },
+                          "items": {
+                            "type": "string"
+                          },
                           "description": "Options for radio/select fields"
                         },
                         "showWhen": {
                           "type": "object",
                           "description": "Conditional visibility - show when another field has specific value",
                           "properties": {
-                            "field": { "type": "string", "description": "Field name to check" },
-                            "value": { "description": "Value that triggers visibility" }
+                            "field": {
+                              "type": "string",
+                              "description": "Field name to check"
+                            },
+                            "value": {
+                              "description": "Value that triggers visibility"
+                            }
                           }
                         }
                       },
-                      "required": ["type", "name", "label"]
+                      "required": [
+                        "type",
+                        "name",
+                        "label"
+                      ]
                     }
                   }
                 },
-                "required": ["title", "fields"]
+                "required": [
+                  "title",
+                  "fields"
+                ]
               }
             }
           },
-          "required": ["title", "sections"]
+          "required": [
+            "title",
+            "sections"
+          ]
         }
       }
     ]
@@ -619,21 +652,21 @@
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
-    "@types/node": "^24.5.2",
-    "@types/sinon": "^17.0.4",
-    "@types/vscode": "^1.106.1",
-    "@typescript-eslint/eslint-plugin": "^8.44.0",
-    "@typescript-eslint/parser": "^8.44.0",
+    "@types/node": "^25.0.10",
+    "@types/sinon": "^21.0.0",
+    "@types/vscode": "^1.108.1",
+    "@typescript-eslint/eslint-plugin": "^8.53.1",
+    "@typescript-eslint/parser": "^8.53.1",
     "@vscode/test-cli": "^0.0.11",
     "@vscode/test-electron": "^2.5.2",
-    "@vscode/vsce": "^3.6.0",
+    "@vscode/vsce": "^3.7.1",
     "c8": "^10.1.3",
-    "esbuild": "^0.27.1",
-    "eslint": "^9.35.0",
-    "mocha": "^11.7.2",
-    "rimraf": "^6.0.1",
-    "sinon": "^21.0.0",
-    "typescript": "^5.9.2"
+    "esbuild": "^0.27.2",
+    "eslint": "^9.39.2",
+    "mocha": "^11.3.0",
+    "rimraf": "^6.1.2",
+    "sinon": "^21.0.1",
+    "typescript": "^5.9.3"
   },
   "dependencies": {
     "jimp": "^1.6.0"

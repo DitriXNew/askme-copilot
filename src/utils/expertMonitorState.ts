@@ -107,7 +107,9 @@ class ExpertMonitorStateManager {
     }
     
     public setPaused(paused: boolean): void {
-        if (this._isPaused === paused) return;
+        if (this._isPaused === paused) {
+            return;
+        }
         
         this._isPaused = paused;
         getLogger().info(`[ExpertMonitor] Pause state: ${paused}`);
@@ -150,7 +152,9 @@ class ExpertMonitorStateManager {
     }
     
     public setShouldAskExpert(value: boolean): void {
-        if (this._shouldAskExpert === value) return;
+        if (this._shouldAskExpert === value) {
+            return;
+        }
         
         this._shouldAskExpert = value;
         getLogger().info(`[ExpertMonitor] shouldAskExpert: ${value}`);
