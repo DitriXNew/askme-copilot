@@ -67,6 +67,13 @@ export function activate(context: vscode.ExtensionContext) {
     
     // Register commands
     context.subscriptions.push(
+        vscode.commands.registerCommand('askMeCopilot.focusExpertPanel', () => {
+            const focused = panelRegistry.focusMostRecentPanel();
+            if (!focused) {
+                vscode.window.showInformationMessage('No active Ask Me Copilot panel to focus');
+            }
+        }),
+        
         vscode.commands.registerCommand('askMeCopilot.showMetrics', () => {
             const metrics = analytics.getMetrics();
             vscode.window.showInformationMessage(

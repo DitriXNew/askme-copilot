@@ -62,24 +62,33 @@ Copilot analyzes images from your project with compression support:
 
 ![Read Image Tool](docs/ImageReader.png)
 
-### � Questionnaire (v1.8.0)
+### 📋 Questionnaire (v1.8.0)
 
-Collect structured data via multi-field forms:
+Collect structured data via multi-field forms when Copilot needs multiple related pieces of information:
+
+![Questionnaire Form](docs/Form.png)
 
 **Field Types:**
-- **Text** - Single-line text input
-- **Textarea** - Multi-line text input
-- **Number** - Numeric input
-- **Checkbox** - Yes/No toggle
-- **Radio** - Single choice from options
-- **Select** - Dropdown selection
+- **Text** - Single-line text input (project name, file path, etc.)
+- **Textarea** - Multi-line text input (descriptions, comments, code snippets)
+- **Number** - Numeric input with validation (port number, count, etc.)
+- **Checkbox** - Yes/No toggle (enable feature, use strict mode)
+- **Radio** - Single choice from options (pick one from list)
+- **Select** - Dropdown selection (choose from many options)
 
-**Features:**
-- **Conditional fields** - Show/hide fields based on other field values (`showWhen`)
-- **Sections** - Group related fields with titles and descriptions
-- **Additional comment** - Free-form text field at the bottom
+**Powerful Features:**
+- **Conditional fields** - Show/hide fields based on other field values using `showWhen`. For example, show "Strict Mode" options only when "Use TypeScript" is checked
+- **Field comments** - Each field has a "+ add comment" link allowing you to provide extra context or notes
+- **Sections** - Group related fields with titles and descriptions for better organization
+- **Required/Optional fields** - Mark fields as required to ensure Copilot gets all necessary information
 - **Attachments** - Add files/images to your response
 - **Templates** - Use response templates like in other tools
+
+**When Copilot uses it:**
+- Configuring a new project with multiple options
+- Setting up database schema with various properties
+- Gathering user preferences for code generation
+- Collecting feature requirements in structured format
 
 **Example call:**
 ```typescript
@@ -89,7 +98,7 @@ Collect structured data via multi-field forms:
     {
       title: "Basic Info",
       fields: [
-        { type: "text", name: "projectName", label: "Project Name" },
+        { type: "text", name: "projectName", label: "Project Name", required: true },
         { type: "checkbox", name: "useTypescript", label: "Use TypeScript?" },
         { 
           type: "radio", 
@@ -104,7 +113,17 @@ Collect structured data via multi-field forms:
 }
 ```
 
-### �📊 Expert Monitor Panel (v1.6.0)
+### 🤖 Focus Expert Panel Button (v1.8.4)
+
+A button in the editor title bar to quickly focus the active expert dialog:
+
+![Pin Button in Editor](docs/pinned.png)
+
+- **Appears only** when there's an active expert panel open
+- **One-click focus** - instantly switch to the expert dialog from any editor
+- **Custom robot icon** - easily recognizable in the editor title area
+
+### 📊 Expert Monitor Panel (v1.6.0)
 
 A **persistent panel** (next to Terminal) for real-time communication with Copilot:
 

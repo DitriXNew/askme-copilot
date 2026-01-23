@@ -2,7 +2,7 @@
   "name": "ask-me-copilot-tool",
   "displayName": "Ask Me Copilot Tool - Expert Collaboration for GitHub Copilot",
   "description": "Transform GitHub Copilot into a collaborative partner by enabling interactive expert communication. Get asked for input when AI needs guidance, preventing errors and improving code quality.",
-  "version": "1.8.2",
+  "version": "1.8.4",
   "publisher": "DitriX",
   "author": {
     "name": "DitriX",
@@ -94,6 +94,15 @@
     },
     "commands": [
       {
+        "command": "askMeCopilot.focusExpertPanel",
+        "title": "Ask Me Copilot: Focus Expert Panel",
+        "category": "Ask Me Copilot",
+        "icon": {
+          "light": "media/robot.png",
+          "dark": "media/robot.png"
+        }
+      },
+      {
         "command": "askMeCopilot.showMetrics",
         "title": "Ask Me Copilot: Show Usage Metrics",
         "category": "Ask Me Copilot"
@@ -114,6 +123,15 @@
         "category": "Ask Me Copilot"
       }
     ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "askMeCopilot.focusExpertPanel",
+          "group": "navigation",
+          "when": "askMeCopilot.hasActivePanel"
+        }
+      ]
+    },
     "configuration": {
       "title": "Ask Me Copilot Tool",
       "properties": {
