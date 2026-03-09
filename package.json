@@ -615,7 +615,7 @@
         "displayName": "🧱 Struct Inspect",
         "tags": ["json", "xml", "jsonc", "structured-data", "inspect", "askme-copilot"],
         "userDescription": "Inspect the skeleton of a JSON or XML file without reading it as raw text",
-        "modelDescription": "Reveals the structural skeleton of a JSON, JSONC, or XML document: nesting hierarchy, array sizes, attribute names, namespace declarations, and node types — all without returning raw text. Returns structured JSON data with depth-limited tree. Use BEFORE struct_query or struct_mutate to understand document shape. Supports open/unsaved documents. Output: { format, skeleton, stats }. Limitation: does not return node values — use struct_query for that.",
+        "modelDescription": "Reveals the structural skeleton of a JSON, JSONC, or XML document: nesting hierarchy, array sizes, attribute names, namespace declarations, and node types — all without returning raw text. Returns structured JSON data with depth-limited tree. Use BEFORE struct_query or struct_mutate to understand document shape. Supports open/unsaved documents. Use 'path' to inspect a subtree instead of the whole document (JSONPath for JSON/JSONC, XPath for XML). Output: { format, skeleton, stats }. Limitation: does not return node values — use struct_query for that.",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "struct_inspect",
         "icon": "$(symbol-structure)",
@@ -630,6 +630,17 @@
               "type": "number",
               "minimum": 0,
               "description": "Optional maximum depth for the returned structure tree"
+            },
+            "path": {
+              "type": "string",
+              "description": "Optional JSONPath or XPath expression to inspect a subtree instead of the whole document. For JSON/JSONC use JSONPath (e.g. '$.store.books'), for XML use XPath (e.g. '//catalog/items')."
+            },
+            "namespaces": {
+              "type": "object",
+              "description": "Optional XML namespace map for XPath in 'path'. Example: { \"ns\": \"http://example.com\" }",
+              "additionalProperties": {
+                "type": "string"
+              }
             }
           },
           "required": [
@@ -698,8 +709,8 @@
         "name": "ask-me-copilot-tool_structMutate",
         "displayName": "🛠️ Struct Mutate",
         "tags": ["json", "xml", "jsonc", "structured-data", "mutate", "edit", "askme-copilot"],
-        "userDescription": "Apply atomic tree-based mutations to JSON/XML and return the updated content",
-        "modelDescription": "Applies one or more tree-based mutations (set, insert, delete, rename, move, copy, set_attribute, delete_attribute) to a JSON, JSONC, or XML document. Operations run sequentially on an in-memory tree and are written back via VS Code WorkspaceEdit (supports undo/redo). Preserves original formatting (indentation, EOL, BOM, XML quotes, comments in JSONC). Reads from open/unsaved buffers. ALWAYS prefer this over raw string replacement for structured files. Use autoSave:true to persist changes to disk. Output: { appliedOps[], content, summary }. Limitation: max 50 MB file size; JSONC comment-preserving mode uses text-based edits.",
+        "userDescription": "Apply structural edits to JSON/XML files. Returns edit instructions for review.",
+        "modelDescription": "Computes structural mutations on a JSON, JSONC, or XML file and returns compact line-based edit instructions. Does NOT write to disk. Each edit instruction specifies: the 1-based line number in the original file, the exact old text on that line (oldText), and the new text to replace it with (newText). Apply each instruction sequentially to the file using your file editing tools. For insertions, the instruction specifies 'insertAfter' with the anchor line. For deletions, the instruction specifies the line range to remove. The 'oldText' field is the exact current content — use it to verify the edit target before applying. Supports: JSON (JSONPath), JSONC with comments (JSONPath), XML with namespaces (XPath). Preserves formatting, indentation, line endings, BOM, JSONC comments, XML attribute quote style. Use struct_inspect first to understand file structure. Use struct_query to count matching nodes before bulk mutations. Output: { success, file, editInstructions[], summary, warnings[] }. Limitation: max 50 MB file size.",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "struct_mutate",
         "icon": "$(edit)",
@@ -709,6 +720,10 @@
             "filePath": {
               "type": "string",
               "description": "Path to a JSON or XML file"
+            },
+            "bulk": {
+              "type": "boolean",
+              "description": "When true, apply all operations to every matching target. Applies to all operations that don't have their own bulk flag. Default: false (only first match per operation)."
             },
             "operations": {
               "type": "array",
@@ -766,14 +781,6 @@
                   "target"
                 ]
               }
-            },
-            "writeBack": {
-              "type": "boolean",
-              "description": "When true (default), apply the updated content to the VS Code buffer (file remains dirty/unsaved). When false, only return the result data without modifying the file."
-            },
-            "autoSave": {
-              "type": "boolean",
-              "description": "When true, save the file to disk after applying mutations (requires writeBack=true). Default is false — changes stay in the buffer only."
             }
           },
           "required": [
@@ -803,13 +810,7 @@
             },
             "schemaType": {
               "type": "string",
-              "enum": [
-                "json_schema",
-                "xsd",
-                "dtd",
-                "relaxng"
-              ],
-              "description": "Validation schema type"
+              "description": "Validation schema type. Allowed values: json_schema (for JSON/JSONC), xsd, dtd, relaxng (XML, not yet supported). Note: use json_schema with underscore, not jsonschema."
             }
           },
           "required": [

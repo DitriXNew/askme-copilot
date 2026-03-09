@@ -2,7 +2,7 @@ import Ajv, { AnySchema } from 'ajv';
 import { XMLValidator } from 'fast-xml-parser';
 import { IStructDiffParameters, IStructValidateParameters } from '../../types';
 import { analyzeJsonLikeDiagnostics } from './diagnostics';
-import { buildXPath, deepEqual, isPlainObject, loadInlineOrFileSchema, schemaTypeLabel } from './common';
+import { buildXPath, deepEqual, isJsonLikeFormat, isPlainObject, loadInlineOrFileSchema, schemaTypeLabel } from './common';
 import { parseJsonDocumentWithFlavor, parseXmlDocument, resolveAndReadStructuredFile } from './file';
 
 const jsonAjv = new Ajv({ allErrors: true, strict: false });
@@ -10,7 +10,7 @@ const jsonAjv = new Ajv({ allErrors: true, strict: false });
 export async function validateStructuredDocument(input: IStructValidateParameters) {
     const file = await resolveAndReadStructuredFile(input.filePath);
 
-    if (file.format === 'json') {
+    if (isJsonLikeFormat(file.format)) {
         const diagnostics = analyzeJsonLikeDiagnostics(file.content);
         let document: unknown;
 
@@ -75,31 +75,39 @@ export async function validateStructuredDocument(input: IStructValidateParameter
     }
 
     const schemaType = input.schemaType;
-    if (!input.schema || !schemaType) {
-        return {
-            ...file,
-            data: { valid: true, format: file.format, filePath: file.originalPath, errors: [], diagnostics: [] }
-        };
+
+    // BUG FIX: Report unsupported schemaType even when no schema is provided
+    if (schemaType && schemaType !== 'json_schema') {
+        if (schemaType === 'xsd' || schemaType === 'dtd' || schemaType === 'relaxng') {
+            throw new Error(`schemaType="${schemaType}" is not supported yet in this build. Current XML validation supports well-formedness checking only.\nExample: struct_validate({ filePath: "${file.originalPath}", schema: "schema.xsd", schemaType: "xsd" }) — will be supported in a future release.`);
+        }
+        throw new Error(`Invalid schemaType "${schemaType}". Allowed values: "json_schema" (for JSON/JSONC), "xsd", "dtd", "relaxng" (XML, not yet supported).`);
     }
 
-    if (schemaType === 'xsd' || schemaType === 'dtd' || schemaType === 'relaxng') {
-        throw new Error(`schemaType="${schemaType}" is not supported yet in this build. Current XML validation supports well-formedness checking only.`);
+    // BUG FIX: Warn when schema is provided but schemaType is missing
+    if (input.schema && !schemaType) {
+        throw new Error('Field "schemaType" is required when "schema" is provided. For XML, use schemaType="xsd", "dtd", or "relaxng" (not yet supported). For JSON, use schemaType="json_schema".');
     }
 
-    throw new Error(`Invalid schemaType "${schemaType}". Allowed values: "json_schema" (for JSON/JSONC), "xsd", "dtd", "relaxng" (XML, not yet supported).`);
+    return {
+        ...file,
+        data: { valid: true, format: file.format, filePath: file.originalPath, errors: [], diagnostics: [] }
+    };
 }
 
 export async function diffStructuredDocuments(input: IStructDiffParameters) {
     const before = await resolveAndReadStructuredFile(input.filePathBefore);
     const after = await resolveAndReadStructuredFile(input.filePathAfter);
 
-    if (before.format !== after.format) {
+    const beforeBase = isJsonLikeFormat(before.format) ? 'json' : before.format;
+    const afterBase = isJsonLikeFormat(after.format) ? 'json' : after.format;
+    if (beforeBase !== afterBase) {
         throw new Error(`Cannot diff different formats: ${before.format} vs ${after.format}`);
     }
 
     const changes: Array<{ path: string; type: 'added' | 'removed' | 'changed'; before?: unknown; after?: unknown }> = [];
 
-    if (before.format === 'json') {
+    if (isJsonLikeFormat(before.format)) {
         const left = parseJsonDocumentWithFlavor(before.content, before.jsonFlavor);
         const right = parseJsonDocumentWithFlavor(after.content, after.jsonFlavor);
         collectDiff('$', left, right, changes);
@@ -289,7 +297,12 @@ function getAttributeMap(element: Element): Map<string, string> {
 }
 
 function serializeElementSummary(element: Element): string {
-    return `<${element.tagName}>`;
+    const attrs = getAttributeMap(element);
+    if (attrs.size === 0) {
+        return `<${element.tagName}>`;
+    }
+    const attrStr = Array.from(attrs.entries()).map(([name, value]) => `${name}="${value}"`).join(' ');
+    return `<${element.tagName} ${attrStr}>`;
 }
 
 export { schemaTypeLabel };

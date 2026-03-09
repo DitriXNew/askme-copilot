@@ -1,11 +1,11 @@
 import * as vscode from 'vscode';
 import { IStructMutateOperation } from '../../types';
-import { deepClone, IJsonQueryMatch, IMutationSummary } from './common';
+import { deepClone, deepEqual, IJsonQueryMatch, IMutationSummary } from './common';
 import { parseJsonDocumentWithFlavor } from './file';
 import { stringifyJsonForEdit } from './formatting';
 import { queryJson } from './inspectQuery';
 import { mutateJsoncDocument } from './jsoncMutations';
-import { parseSimpleJsonPath, setJsonAtPath } from './jsonPath';
+import { getValueAtPath, parseSimpleJsonPath, setJsonAtPath } from './jsonPath';
 
 export function mutateJsonDocument(file: { content: string; jsonFlavor?: 'json' | 'jsonc'; eol: string; trailingNewline: boolean; hasBom: boolean }, operations: IStructMutateOperation[], token: vscode.CancellationToken): {
     document: unknown;
@@ -54,8 +54,14 @@ function applySingleJsonMutation(document: unknown, operation: IStructMutateOper
                 return { action: operation.action, target: operation.target, matched: 0, changed: 1, details: 'Created missing path.' };
             }
 
-            selectedMatches.forEach(match => replaceJsonMatch(match, deepClone(operation.value), document));
-            return { action: operation.action, target: operation.target, matched: matches.length, changed: selectedMatches.length };
+            let actualChanged = 0;
+            selectedMatches.forEach(match => {
+                if (!deepEqual(match.value, operation.value)) {
+                    replaceJsonMatch(match, deepClone(operation.value), document);
+                    actualChanged++;
+                }
+            });
+            return { action: operation.action, target: operation.target, matched: matches.length, changed: actualChanged };
         }
         case 'delete': {
             const rootDelete = selectedMatches.some(match => parseSimpleJsonPath(match.path)?.length === 0);
@@ -68,7 +74,7 @@ function applySingleJsonMutation(document: unknown, operation: IStructMutateOper
         }
         case 'rename': {
             if (typeof operation.value !== 'string' || !operation.value.trim()) {
-                throw new Error('rename requires a non-empty string in value.');
+                throw new Error('rename requires the new key name in the "value" field (e.g., { action: "rename", target: "$.oldKey", value: "newKey" }).');
             }
 
             selectedMatches.forEach(match => renameJsonMatch(match, operation.value as string));
@@ -137,12 +143,21 @@ function renameJsonMatch(match: IJsonQueryMatch, newKey: string): void {
     }
 
     const parent = match.parent as Record<string, unknown>;
-    if (Object.prototype.hasOwnProperty.call(parent, newKey) && newKey !== String(match.parentProperty)) {
+    const oldKey = String(match.parentProperty);
+    if (Object.prototype.hasOwnProperty.call(parent, newKey) && newKey !== oldKey) {
         throw new Error(`rename conflict: property "${newKey}" already exists.`);
     }
 
-    parent[newKey] = parent[String(match.parentProperty)];
-    delete parent[String(match.parentProperty)];
+    // Preserve key order by rebuilding in place
+    const entries = Object.keys(parent).map(key =>
+        key === oldKey ? [newKey, parent[key]] as const : [key, parent[key]] as const,
+    );
+    for (const key of Object.keys(parent)) {
+        delete parent[key];
+    }
+    for (const [key, value] of entries) {
+        parent[key] = value;
+    }
 }
 
 function insertIntoJson(operation: IStructMutateOperation, matches: IJsonQueryMatch[], document: unknown): number {
@@ -205,7 +220,7 @@ function moveJsonMatch(document: unknown, operation: IStructMutateOperation, mat
 
     const value = deepClone(match.value);
     deleteJsonMatches([match]);
-    const placed = setJsonAtPath(document, operation.destination, value);
+    const placed = placeJsonValue(document, operation.destination, value, operation.position);
     if (!placed) {
         throw new Error(`Destination not found for move: ${operation.destination}`);
     }
@@ -224,10 +239,45 @@ function copyJsonMatch(document: unknown, operation: IStructMutateOperation, mat
     }
 
     const value = deepClone(match.value);
-    const placed = setJsonAtPath(document, operation.destination, value);
+    const placed = placeJsonValue(document, operation.destination, value, operation.position);
     if (!placed) {
         throw new Error(`Destination not found for copy: ${operation.destination}`);
     }
 
     return 1;
+}
+
+function placeJsonValue(document: unknown, destination: string, value: unknown, position?: string): boolean {
+    const segments = parseSimpleJsonPath(destination);
+    if (!segments) {
+        return setJsonAtPath(document, destination, value);
+    }
+
+    const target = getValueAtPath(document, segments);
+    if (target === undefined) {
+        return setJsonAtPath(document, destination, value);
+    }
+
+    // If destination is an array and a position is specified, insert into it
+    if (Array.isArray(target)) {
+        if (!position || position === 'append') {
+            target.push(value);
+            return true;
+        }
+        if (position === 'prepend') {
+            target.unshift(value);
+            return true;
+        }
+        if (position.startsWith('at:')) {
+            const index = Number(position.slice(3));
+            if (!Number.isInteger(index) || index < 0 || index > target.length) {
+                throw new Error(`Invalid insert position: ${position}`);
+            }
+            target.splice(index, 0, value);
+            return true;
+        }
+    }
+
+    // Default: replace the destination value
+    return setJsonAtPath(document, destination, value);
 }

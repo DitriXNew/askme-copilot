@@ -1,7 +1,7 @@
 import * as vscode from 'vscode';
 import { BaseTool } from './baseTool';
 import { IStructMutateParameters } from '../types';
-import { createMutateUsage, mutateStructuredDocument, summarizeMutationResult } from './structShared';
+import { createMutateUsage, mutateStructuredDocument } from './structShared';
 
 export class StructMutateTool extends BaseTool<IStructMutateParameters> {
     async invoke(
@@ -24,10 +24,10 @@ export class StructMutateTool extends BaseTool<IStructMutateParameters> {
                 return this.createCancelResult();
             }
 
+            const { _serializedContent: _, ...output } = result;
+
             return new vscode.LanguageModelToolResult([
-                new vscode.LanguageModelTextPart(
-                    `${summarizeMutationResult(result)}\n${JSON.stringify(result.data, null, 2)}`
-                ),
+                new vscode.LanguageModelTextPart(JSON.stringify(output, null, 2)),
             ]);
         } catch (error) {
             return this.createUsageErrorResult('struct_mutate', String(error), createMutateUsage());

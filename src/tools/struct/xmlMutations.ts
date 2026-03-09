@@ -30,9 +30,17 @@ function applySingleXmlMutation(document: Document, operation: IStructMutateOper
     const selectedMatches = operation.bulk ? matches : matches.slice(0, 1);
 
     switch (operation.action) {
-        case 'set':
-            selectedMatches.forEach(match => setXmlNodeValue(document, match.node, operation.value));
-            return { action: operation.action, target: operation.target, matched: matches.length, changed: selectedMatches.length };
+        case 'set': {
+            let setChanged = 0;
+            selectedMatches.forEach(match => {
+                const currentValue = getXmlNodeTextValue(match.node);
+                if (currentValue !== String(operation.value ?? '')) {
+                    setXmlNodeValue(document, match.node, operation.value);
+                    setChanged++;
+                }
+            });
+            return { action: operation.action, target: operation.target, matched: matches.length, changed: setChanged };
+        }
         case 'delete':
             selectedMatches.forEach(match => deleteXmlNode(match.node));
             return { action: operation.action, target: operation.target, matched: matches.length, changed: selectedMatches.length };
@@ -89,8 +97,20 @@ function applySingleXmlMutation(document: Document, operation: IStructMutateOper
                 throw new Error('set_attribute requires attribute.');
             }
 
-            selectedMatches.forEach(match => setXmlAttribute(match.node, operation.attribute as string, operation.value));
-            return { action: operation.action, target: operation.target, matched: matches.length, changed: selectedMatches.length };
+            let attrChanged = 0;
+            selectedMatches.forEach(match => {
+                if (match.node.nodeType === match.node.ELEMENT_NODE) {
+                    const currentVal = (match.node as Element).getAttribute(operation.attribute as string);
+                    if (currentVal !== String(operation.value ?? '')) {
+                        setXmlAttribute(match.node, operation.attribute as string, operation.value);
+                        attrChanged++;
+                    }
+                } else {
+                    setXmlAttribute(match.node, operation.attribute as string, operation.value);
+                    attrChanged++;
+                }
+            });
+            return { action: operation.action, target: operation.target, matched: matches.length, changed: attrChanged };
         }
         case 'delete_attribute': {
             if (!operation.attribute) {
@@ -103,6 +123,13 @@ function applySingleXmlMutation(document: Document, operation: IStructMutateOper
         default:
             throw new Error(`Action ${operation.action} is not supported for XML.`);
     }
+}
+
+function getXmlNodeTextValue(node: Node): string {
+    if (node.nodeType === node.ATTRIBUTE_NODE) {
+        return (node as Attr).value;
+    }
+    return node.textContent ?? '';
 }
 
 function setXmlNodeValue(document: Document, node: Node, value: unknown): void {

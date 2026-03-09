@@ -1,63 +1,77 @@
 import * as vscode from 'vscode';
 import { IStructMutateParameters } from '../../types';
-import { applyStructuredWorkspaceEdit } from './common';
+import { computeEditInstructions, EditInstruction, isJsonLikeFormat } from './common';
 import { parseXmlDocument, resolveAndReadStructuredFile } from './file';
 import { stringifyXmlForEdit } from './formatting';
 import { mutateJsonDocument } from './jsonMutations';
 import { applyXmlMutations } from './xmlMutations';
 
-export async function mutateStructuredDocument(input: IStructMutateParameters, token: vscode.CancellationToken) {
+export interface IMutateResult {
+    success: boolean;
+    file: string;
+    editInstructions: EditInstruction[];
+    summary: string;
+    warnings: string[];
+    operationDetails: Array<{ action: string; target: string; matched: number; changed: number; details?: string }>;
+    /** Internal: full serialized content for testing. NOT sent to LLM. */
+    _serializedContent: string;
+}
+
+export async function mutateStructuredDocument(input: IStructMutateParameters, token: vscode.CancellationToken): Promise<IMutateResult> {
     const file = await resolveAndReadStructuredFile(input.filePath);
 
     if (token.isCancellationRequested) {
         throw new Error('Operation cancelled.');
     }
 
-    if (file.format === 'json') {
-        const jsonResult = mutateJsonDocument(file, input.operations, token);
+    // Propagate top-level bulk flag to operations that don't have their own
+    const operations = input.operations.map(op =>
+        op.bulk === undefined && input.bulk ? { ...op, bulk: true } : op,
+    );
+
+    let serialized: string;
+    let summaries: Array<{ action: string; target: string; matched: number; changed: number; details?: string }>;
+
+    if (isJsonLikeFormat(file.format)) {
+        const jsonResult = mutateJsonDocument(file, operations, token);
 
         if (token.isCancellationRequested) {
             throw new Error('Operation cancelled.');
         }
 
-        await applyStructuredWorkspaceEdit(file.absolutePath, jsonResult.serialized, input.writeBack ?? true, input.autoSave);
+        serialized = jsonResult.serialized;
+        summaries = jsonResult.summaries;
+    } else {
+        const document = parseXmlDocument(file.content);
+        summaries = applyXmlMutations(document, operations, token);
 
-        return {
-            ...file,
-            data: {
-                format: file.format,
-                filePath: file.originalPath,
-                writeBack: input.writeBack ?? true,
-                autoSave: input.autoSave ?? false,
-                changed: jsonResult.summaries.reduce((acc, item) => acc + item.changed, 0),
-                operations: jsonResult.summaries,
-                content: jsonResult.document
-            },
-            serialized: jsonResult.serialized
-        };
+        if (token.isCancellationRequested) {
+            throw new Error('Operation cancelled.');
+        }
+
+        serialized = stringifyXmlForEdit(document, file.content, file.eol, file.trailingNewline);
     }
 
-    const document = parseXmlDocument(file.content);
-    const summaries = applyXmlMutations(document, input.operations, token);
+    const editInstructions = computeEditInstructions(file.content, serialized, file.eol);
+    const totalChanged = summaries.reduce((acc, item) => acc + item.changed, 0);
+    const warnings: string[] = [];
+    summaries.forEach((op, i) => {
+        if (op.matched === 0 && op.changed === 0) {
+            warnings.push(`Operation ${i + 1} (${op.action} on ${op.target}): 0 nodes matched.`);
+        } else if (op.matched === 0 && op.changed > 0) {
+            warnings.push(`Operation ${i + 1} (${op.action} on ${op.target}): path did not exist — created intermediate nodes.`);
+        }
+    });
 
-    if (token.isCancellationRequested) {
-        throw new Error('Operation cancelled.');
-    }
-
-    const serialized = stringifyXmlForEdit(document, file.content, file.eol, file.trailingNewline);
-    await applyStructuredWorkspaceEdit(file.absolutePath, serialized, input.writeBack ?? true, input.autoSave);
+    const summaryText = `${summaries.length} operation(s) applied. ${totalChanged} node(s) modified. ${editInstructions.length} edit instruction(s).`;
 
     return {
-        ...file,
-        data: {
-            format: file.format,
-            filePath: file.originalPath,
-            writeBack: input.writeBack ?? true,
-            autoSave: input.autoSave ?? false,
-            changed: summaries.reduce((acc, item) => acc + item.changed, 0),
-            operations: summaries,
-            content: serialized
-        },
-        serialized
+        success: true,
+        file: file.absolutePath,
+        editInstructions,
+        summary: summaryText,
+        warnings,
+        operationDetails: summaries,
+        _serializedContent: serialized,
     };
 }

@@ -56,7 +56,9 @@ export async function resolveAndReadStructuredFile(filePath: string): Promise<IR
         // If we can't read raw bytes, assume no BOM — TextDocument path handles it
     }
 
-    const format = detectStructuredFormat(absolutePath, content);
+    const baseFormat = detectStructuredFormat(absolutePath, content);
+    const jsonFlavor = baseFormat === 'json' ? detectJsonFlavor(absolutePath, content) : undefined;
+    const format = jsonFlavor === 'jsonc' ? 'jsonc' as const : baseFormat;
 
     return {
         format,
@@ -66,7 +68,7 @@ export async function resolveAndReadStructuredFile(filePath: string): Promise<IR
         hasBom,
         eol,
         trailingNewline: /\r?\n$/.test(content),
-        jsonFlavor: format === 'json' ? detectJsonFlavor(absolutePath, content) : undefined
+        jsonFlavor
     };
 }
 

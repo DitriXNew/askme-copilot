@@ -124,7 +124,8 @@ export function parseSimpleJsonPath(target: string): Array<string | number> | nu
         return null;
     }
 
-    const normalized = target.trim();
+    // Fix @-prefixed keys in dot notation: $.@key → $["@key"]
+    const normalized = target.trim().replace(/\.(@[^.[]*)/g, '["$1"]');
     if (normalized === '$') {
         return [];
     }

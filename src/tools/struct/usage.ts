@@ -9,7 +9,7 @@ export function createQueryUsage(): string {
 }
 
 export function createMutateUsage(): string {
-    return 'struct_mutate({ filePath: "data/orders.json", operations: [{ action: "set", target: "$.orders[0].status", value: "shipped" }], writeBack: true })';
+    return 'struct_mutate({ filePath: "data/orders.json", operations: [{ action: "set", target: "$.orders[0].status", value: "shipped" }] })';
 }
 
 export function createValidateUsage(): string {
@@ -20,9 +20,9 @@ export function createDiffUsage(): string {
     return 'struct_diff({ filePathBefore: "before/orders.xml", filePathAfter: "after/orders.xml", ignoreWhitespace: true })';
 }
 
-export function summarizeMutationResult(result: { data: { changed: number; operations: IMutationSummary[] } }): string {
-    const lines = [`Updated ${result.data.changed} node(s) across ${result.data.operations.length} operation(s).`];
-    result.data.operations.forEach((operation, index) => {
+export function summarizeMutationResult(result: { operationDetails: IMutationSummary[]; summary: string }): string {
+    const lines = [result.summary];
+    result.operationDetails.forEach((operation, index) => {
         lines.push(`${index + 1}. ${operation.action} on ${operation.target} -> changed ${operation.changed}, matched ${operation.matched}`);
     });
     return lines.join('\n');

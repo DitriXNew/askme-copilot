@@ -145,7 +145,7 @@ export interface IQuestionnaireResult {
     attachments?: IAttachment[];
 }
 
-export type StructFileFormat = 'json' | 'xml';
+export type StructFileFormat = 'json' | 'jsonc' | 'xml';
 export type StructQueryLanguage = 'jsonpath' | 'xpath';
 export type StructQueryReturnMode = 'values' | 'paths' | 'count' | 'paths+values';
 export type StructSchemaType = 'json_schema' | 'xsd' | 'dtd' | 'relaxng';
@@ -163,6 +163,8 @@ export type StructMutationAction =
 export interface IStructInspectParameters {
     filePath: string;
     depth?: number;
+    path?: string;
+    namespaces?: Record<string, string>;
 }
 
 export interface IStructQueryParameters {
@@ -188,8 +190,7 @@ export interface IStructMutateOperation {
 export interface IStructMutateParameters {
     filePath: string;
     operations: IStructMutateOperation[];
-    writeBack?: boolean;
-    autoSave?: boolean;
+    bulk?: boolean;
 }
 
 export interface IStructValidateParameters {

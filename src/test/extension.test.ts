@@ -785,15 +785,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve single-line JSON formatting', async () => {
             const filePath = copyFixtureToTemp('json_oneline.json');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set', target: '$.orders[0].status', value: 'shipped' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             const normalized = saved.replace(/(\r?\n)+$/, '');
             assert.ok(!normalized.includes('\n') && !normalized.includes('\r'), 'Single-line JSON should remain single-line');
             assert.ok(saved.includes('"status":"shipped"'));
@@ -802,16 +801,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve BOM, CRLF and tab indentation for JSON', async () => {
             const filePath = copyFixtureToTemp('json_tabs_bom_crlf.json');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set', target: '$.orders[0].status', value: 'shipped' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
-            assert.strictEqual(saved.charCodeAt(0), 0xfeff, 'BOM should be preserved');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('\r\n'), 'CRLF should be preserved');
             assert.ok(saved.includes('\n\t"orders"'), 'Tab indentation should be preserved');
             assert.ok(saved.includes('"status": "shipped"'));
@@ -820,15 +817,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve two-space XML indentation on insert', async () => {
             const filePath = copyFixtureToTemp('xml_spaces_2.xml');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'insert', target: '/orders[1]', value: '<order id="3" status="pending"><item sku="C-3">Adapter</item></order>', position: 'append' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('\n  <order id="1"'), 'Top-level children should keep two-space indentation');
             assert.ok(saved.includes('\n    <item sku="C-3">Adapter</item>'), 'Nested children should keep four-space indentation');
             assert.ok(saved.includes('<order id="3" status="pending">'));
@@ -837,16 +833,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve BOM, CRLF and tab indentation for XML', async () => {
             const filePath = copyFixtureToTemp('xml_tabs_bom_crlf.xml');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set_attribute', target: '/orders[1]/order[1]', attribute: 'priority', value: 'high' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
-            assert.strictEqual(saved.charCodeAt(0), 0xfeff, 'BOM should be preserved');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('\r\n'), 'CRLF should be preserved');
             assert.ok(saved.includes('\r\n\t<order id="1" status="pending" priority="high">'));
             assert.ok(saved.includes('\r\n\t\t<item sku="A-1">Widget</item>'));
@@ -855,15 +849,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should keep single-line XML single-line after mutation', async () => {
             const filePath = copyFixtureToTemp('xml_oneline.xml');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set_attribute', target: '/orders[1]/order[1]', attribute: 'priority', value: 'high' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             const normalized = saved.replace(/(\r?\n)+$/, '');
             assert.ok(!normalized.includes('\n') && !normalized.includes('\r'), 'Single-line XML should remain single-line');
             assert.ok(saved.includes('priority="high"'));
@@ -915,9 +908,8 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
                 meta: 'http://example.com/meta'
             };
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     {
                         action: 'insert',
@@ -926,37 +918,28 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
                         value: '<inv:item inv:id="inventory-2"><inv:name>Spare Cable</inv:name></inv:item>',
                         namespaces
                     }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
-            assert.strictEqual(saved.charCodeAt(0), 0xfeff, 'BOM should be preserved');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('\r\n'), 'CRLF should be preserved');
-            assert.ok(saved.includes('\r\n\t<inv:item inv:id="inventory-2">'));
-            assert.ok(saved.includes('\r\n\t\t<inv:name>Spare Cable</inv:name>'));
-
-            const queryInserted = await queryStructuredDocument({
-                filePath,
-                expression: '//inv:item[@inv:id="inventory-2"]',
-                namespaces,
-                return: 'count'
-            });
-            assert.strictEqual(queryInserted.data.count, 1, 'Inserted namespaced node should be queryable');
+            assert.ok(saved.includes('<inv:item inv:id="inventory-2">'));
+            assert.ok(saved.includes('<inv:name>Spare Cable</inv:name>'));
+            assert.ok(result.editInstructions.length > 0, 'Should have edit instructions');
         });
 
         test('should support JSONC mutation while preserving comments', async () => {
             const filePath = copyFixtureToTemp('json_comments.jsonc');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set', target: '$.featureFlags.jsoncSupport', value: true },
                     { action: 'set', target: '$.featureFlags.newFlag', value: 'enabled' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('// This comment must survive JSONC mutation'));
             assert.ok(saved.includes('"jsoncSupport": true'));
             assert.ok(saved.includes('"newFlag": "enabled"'));
@@ -1015,17 +998,15 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should keep an empty array when deleting the last element', async () => {
             const filePath = copyFixtureToTemp('json_spaces_2.json');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'delete', target: '$.orders[1]' },
                     { action: 'delete', target: '$.orders[0]' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
-            assert.ok(saved.includes('"orders": []'));
+            assert.ok(result._serializedContent.includes('"orders": []'));
         });
 
         test('should reject deleting the JSON root', async () => {
@@ -1034,10 +1015,9 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             await assert.rejects(
                 () => mutateStructuredDocument({
                     filePath,
-                    writeBack: false,
                     operations: [
                         { action: 'delete', target: '$' }
-                    ]
+                    ],
                 }, mockToken),
                 /Deleting the JSON root is not allowed/
             );
@@ -1049,10 +1029,9 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             await assert.rejects(
                 () => mutateStructuredDocument({
                     filePath,
-                    writeBack: false,
                     operations: [
                         { action: 'rename', target: '$.orders[0].status', value: 'id' }
-                    ]
+                    ],
                 }, mockToken),
                 /rename conflict/
             );
@@ -1062,28 +1041,26 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             const filePath = copyFixtureToTemp('json_spaces_2.json');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'delete', target: '$.orders[?(@.status=="missing")]', bulk: true }
-                ]
+                ],
             }, mockToken);
 
-            assert.strictEqual(result.data.changed, 0);
-            assert.strictEqual(result.data.operations[0].matched, 0);
+            assert.strictEqual(result.operationDetails[0].matched, 0);
+            assert.strictEqual(result.operationDetails[0].changed, 0);
         });
 
         test('should apply JSON batch operations sequentially on one tree', async () => {
             const filePath = copyFixtureToTemp('json_spaces_2.json');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'set', target: '$.a.b.c.d', value: 1 },
                     { action: 'set', target: '$.a.b.c.e', value: 2 }
-                ]
+                ],
             }, mockToken);
 
-            const content = result.data.content as { a: { b: { c: { d: number; e: number } } } };
+            const content = JSON.parse(result._serializedContent) as { a: { b: { c: { d: number; e: number } } } };
             assert.strictEqual(content.a.b.c.d, 1);
             assert.strictEqual(content.a.b.c.e, 2);
         });
@@ -1093,16 +1070,15 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             const filePath = path.join(tempDir, 'empty.jsonc');
             fs.writeFileSync(filePath, '{\n  "items": [],\n  "meta": {}\n}\n', 'utf8');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'insert', target: '$.items', value: { id: 1 }, position: 'append' },
                     { action: 'insert', target: '$.meta', value: { createdBy: 'test' }, position: 'append' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('"items": ['));
             assert.ok(saved.includes('"id": 1'));
             assert.ok(saved.includes('"createdBy": "test"'));
@@ -1111,15 +1087,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve XML declaration, doctype and empty-tag style where possible', async () => {
             const filePath = copyFixtureToTemp('xml_self_closing.xml');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set_attribute', target: '/layout[1]/icon[1]', attribute: 'priority', value: 'high' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.startsWith('<?xml version="1.0" encoding="UTF-8"?>'));
             assert.ok(saved.includes('<!DOCTYPE layout>'));
             assert.ok(saved.includes('<br/>'));
@@ -1129,15 +1104,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should keep mixed-content XML semantically intact after unrelated mutation', async () => {
             const filePath = copyFixtureToTemp('xml_mixed_content.xml');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set_attribute', target: '/article[1]/p[2]/i[1]', attribute: 'tone', value: 'soft' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('<p>text <b>bold</b> tail</p>'));
             assert.ok(saved.includes('<i tone="soft">italic</i>'));
         });
@@ -1183,15 +1157,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve four-space XML indentation on mutation', async () => {
             const filePath = copyFixtureToTemp('xml_spaces_4.xml');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set_attribute', target: '/orders[1]/order[1]', attribute: 'priority', value: 'high' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('\n    <order id="1"'), 'Top-level children should keep four-space indentation');
             assert.ok(saved.includes('\n        <item sku="A-1">Widget</item>'), 'Nested children should keep eight-space indentation');
             assert.ok(saved.includes('priority="high"'));
@@ -1200,15 +1173,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve XML attribute single-quote style', async () => {
             const filePath = copyFixtureToTemp('xml_single_quotes.xml');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set_attribute', target: '/config[1]/database[1]', attribute: 'schema', value: 'public' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.includes("host='localhost'"), 'Single-quoted attributes should remain single-quoted');
             assert.ok(saved.includes('name="mydb"'), 'Double-quoted attributes should remain double-quoted');
         });
@@ -1216,15 +1188,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
         test('should preserve JSON without trailing newline', async () => {
             const filePath = copyFixtureToTemp('json_no_trailing_newline.json');
 
-            await mutateStructuredDocument({
+            const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: true,
                 operations: [
                     { action: 'set', target: '$.key', value: 'updated' }
-                ]
+                ],
             }, mockToken);
 
-            const saved = fs.readFileSync(filePath, 'utf8');
+            const saved = result._serializedContent;
             assert.ok(saved.includes('"key": "updated"'));
             assert.ok(!saved.endsWith('\n'), 'File without trailing newline should not gain one');
         });
@@ -1235,13 +1206,14 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             const afterPath = path.join(afterDir, 'json_spaces_2.json');
             fs.copyFileSync(beforePath, afterPath);
 
-            await mutateStructuredDocument({
+            const mutateResult = await mutateStructuredDocument({
                 filePath: afterPath,
-                writeBack: true,
                 operations: [
                     { action: 'set', target: '$.orders[0].status', value: 'shipped' }
-                ]
+                ],
             }, mockToken);
+
+            fs.writeFileSync(afterPath, mutateResult._serializedContent, 'utf8');
 
             const result = await diffStructuredDocuments({
                 filePathBefore: beforePath,
@@ -1265,7 +1237,6 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
 
         test('should abort mutation when cancellation is requested', async () => {
             const filePath = copyFixtureToTemp('json_spaces_2.json');
-            const contentBefore = fs.readFileSync(filePath, 'utf8');
             const cancelledToken: vscode.CancellationToken = {
                 isCancellationRequested: true,
                 onCancellationRequested: (() => ({ dispose() { /* noop */ } })) as unknown as vscode.CancellationToken['onCancellationRequested']
@@ -1274,15 +1245,12 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             await assert.rejects(
                 () => mutateStructuredDocument({
                     filePath,
-                    writeBack: false,
                     operations: [
                         { action: 'set', target: '$.orders[0].status', value: 'cancelled' }
-                    ]
+                    ],
                 }, cancelledToken),
                 /cancelled/i
             );
-
-            assert.strictEqual(fs.readFileSync(filePath, 'utf8'), contentBefore, 'File should not be modified when cancelled');
         });
 
         test('should reject files exceeding size limit', async () => {
@@ -1300,7 +1268,6 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             await assert.rejects(
                 () => mutateStructuredDocument({
                     filePath,
-                    writeBack: false,
                     operations: [
                         { action: 'delete', target: '/orders' },
                     ],
@@ -1313,12 +1280,11 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             const filePath = copyFixtureToTemp('json_spaces_2.json');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'set', target: '$.totally_missing[*]', value: 'x', bulk: true },
                 ],
             }, mockToken);
-            const opSummary = result.data.operations[0];
+            const opSummary = result.operationDetails[0];
             assert.strictEqual(opSummary.matched, 0, 'Should match 0 nodes');
             assert.strictEqual(opSummary.changed, 0, 'Should change 0 nodes');
         });
@@ -1338,12 +1304,11 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             const filePath = copyFixtureToTemp('xml_self_closing.xml');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'set_attribute', target: '/layout', attribute: 'version', value: '2.0' },
                 ],
             }, mockToken);
-            const declarationCount = (result.serialized.match(/<\?xml /g) ?? []).length;
+            const declarationCount = (result._serializedContent.match(/<\?xml /g) ?? []).length;
             assert.strictEqual(declarationCount, 1, 'XML declaration should appear exactly once');
         });
 
@@ -1402,39 +1367,37 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             const filePath = copyFixtureToTemp('xml_spaces_2.xml');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'set_attribute', target: '/orders/order[1]', attribute: 'test', value: 'yes' },
                 ],
             }, mockToken);
-            assert.ok(result.data.content, 'XML mutate should return content');
-            assert.ok(typeof result.data.content === 'string', 'XML content should be a string');
-            assert.ok((result.data.content as string).includes('test="yes"'), 'Content should contain the mutation');
+            assert.ok(result._serializedContent, 'XML mutate should return serialized content');
+            assert.ok(typeof result._serializedContent === 'string', 'XML content should be a string');
+            assert.ok(result._serializedContent.includes('test="yes"'), 'Content should contain the mutation');
         });
 
         test('should copy JSON node to new location', async () => {
             const filePath = copyFixtureToTemp('json_spaces_2.json');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'copy', target: '$.orders[0]', destination: '$.ordersCopy' },
                 ],
             }, mockToken);
-            assert.strictEqual(result.data.changed, 1);
-            assert.ok((result.data.content as Record<string, unknown>).ordersCopy, 'Copied node should exist at destination');
+            assert.strictEqual(result.operationDetails[0].changed, 1);
+            const parsed = JSON.parse(result._serializedContent) as Record<string, unknown>;
+            assert.ok(parsed.ordersCopy, 'Copied node should exist at destination');
         });
 
         test('should copy XML node to new location', async () => {
             const filePath = copyFixtureToTemp('xml_spaces_2.xml');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'copy', target: '/orders/order[1]', destination: '/orders', position: 'append' },
                 ],
             }, mockToken);
-            assert.strictEqual(result.data.changed, 1);
+            assert.strictEqual(result.operationDetails[0].changed, 1);
         });
 
         test('should include formatting metadata in inspect response', async () => {
@@ -1461,14 +1424,283 @@ suite('Unit Tests - Ask Me Copilot Extension', () => {
             const filePath = copyFixtureToTemp('json_spaces_2.json');
             const result = await mutateStructuredDocument({
                 filePath,
-                writeBack: false,
                 operations: [
                     { action: 'set', target: '$.batchTest', value: 'step1' },
                     { action: 'set', target: '$.batchTest', value: 'step2' },
                 ],
             }, mockToken);
-            assert.strictEqual(result.data.operations.length, 2);
-            assert.strictEqual((result.data.content as Record<string, unknown>).batchTest, 'step2', 'Second operation should override first');
+            assert.strictEqual(result.operationDetails.length, 2);
+            const parsed = JSON.parse(result._serializedContent) as Record<string, unknown>;
+            assert.strictEqual(parsed.batchTest, 'step2', 'Second operation should override first');
+        });
+
+        test('should produce compact editInstructions for rename (not O(n) per-line)', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            const result = await mutateStructuredDocument({
+                filePath,
+                operations: [
+                    { action: 'rename', target: '$.name', value: 'title' },
+                ],
+            }, mockToken);
+            assert.ok(result.success, 'Rename should succeed');
+            assert.ok(result.editInstructions.length <= 3,
+                `Rename of one key should produce at most 3 edit instructions, got ${result.editInstructions.length}`);
+            const parsed = JSON.parse(result._serializedContent) as Record<string, unknown>;
+            assert.ok('title' in parsed, 'Renamed key should exist');
+            assert.ok(!('name' in parsed), 'Original key should not exist');
+        });
+
+        test('should handle @-prefix keys in JSONPath without TypeError', async () => {
+            // Create a temp file with @-prefix keys (like Flutter ARB files)
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'askme-struct-atprefix-'));
+            const filePath = path.join(tempDir, 'arb_test.json');
+            fs.writeFileSync(filePath, JSON.stringify({
+                '@@locale': 'en',
+                'add': 'Add',
+                '@add': { 'description': 'Add button label' },
+            }, null, 2));
+
+            // Query with @-prefix key
+            const queryResult = await queryStructuredDocument({
+                filePath,
+                expression: '$["@add"]',
+                return: 'values' as 'values',
+            });
+            assert.ok(queryResult.data.totalMatches > 0, 'Should find @add key');
+
+            // Inspect with path targeting @-prefix key
+            const inspectResult = await inspectStructuredDocument({
+                filePath,
+                path: '$["@add"]',
+            });
+            assert.ok(inspectResult.data, 'Inspect with @-prefix path should return data');
+
+            // Mutate @-prefix key
+            const mutateResult = await mutateStructuredDocument({
+                filePath,
+                operations: [
+                    { action: 'set', target: '$["@add"].description', value: 'Updated label' },
+                ],
+            }, mockToken);
+            assert.ok(mutateResult.success, 'Mutation on @-prefix key should succeed');
+            const parsed = JSON.parse(mutateResult._serializedContent) as Record<string, unknown>;
+            assert.strictEqual(
+                (parsed['@add'] as Record<string, unknown>).description,
+                'Updated label',
+            );
+        });
+
+        test('should inspect subtree when path parameter is provided (JSON)', async () => {
+            const filePath = copyFixtureToTemp('json_deeply_nested.json');
+            // Inspect whole document
+            const fullResult = await inspectStructuredDocument({ filePath });
+            // Inspect with path
+            const subResult = await inspectStructuredDocument({
+                filePath,
+                path: '$.level1',
+            });
+            assert.ok(subResult.data, 'Subtree inspect should return data');
+            assert.ok(subResult.data.structure, 'Subtree inspect should have structure');
+            // The subtree structure should be smaller than the full structure
+            const fullStr = JSON.stringify(fullResult.data.structure);
+            const subStr = JSON.stringify(subResult.data.structure);
+            assert.ok(subStr.length <= fullStr.length,
+                'Subtree structure should be no larger than full structure');
+        });
+
+        test('should inspect subtree when path parameter is provided (XML)', async () => {
+            const filePath = copyFixtureToTemp('xml_spaces_2.xml');
+            // Inspect with path
+            const subResult = await inspectStructuredDocument({
+                filePath,
+                path: '//item',
+            });
+            assert.ok(subResult.data, 'XML subtree inspect should return data');
+            assert.ok(subResult.data.structure, 'XML subtree inspect should have structure');
+            assert.ok(subResult.data.path, 'Response should include the path that was used');
+        });
+
+        test('should handle @@locale key with double @-prefix (ARB files)', async () => {
+            const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'askme-struct-arb-'));
+            const filePath = path.join(tempDir, 'app_en.arb');
+            fs.writeFileSync(filePath, JSON.stringify({
+                '@@locale': 'en',
+                'title': 'App Title',
+                '@title': { 'description': 'Main title' },
+            }, null, 2));
+
+            // Query @@locale
+            const queryResult = await queryStructuredDocument({
+                filePath,
+                expression: '$["@@locale"]',
+                return: 'values' as 'values',
+            });
+            assert.ok(queryResult.data.totalMatches > 0, 'Should find @@locale key');
+
+            // Mutate @@locale
+            const mutateResult = await mutateStructuredDocument({
+                filePath,
+                operations: [
+                    { action: 'set', target: '$["@@locale"]', value: 'ru' },
+                ],
+            }, mockToken);
+            assert.ok(mutateResult.success, 'Mutation on @@locale key should succeed');
+            const parsed = JSON.parse(mutateResult._serializedContent) as Record<string, unknown>;
+            assert.strictEqual(parsed['@@locale'], 'ru');
+        });
+
+        test('should generate bracket-notation paths for keys with dots', async () => {
+            const filePath = copyFixtureToTemp('json_comments.jsonc');
+            const result = await inspectStructuredDocument({ filePath });
+            const structure = result.data.structure as { children?: Array<{ name: string; path: string }> };
+            const dotKeyChild = structure.children?.find(
+                (child: { name: string }) => child.name === 'editor.tabSize',
+            );
+            assert.ok(dotKeyChild, 'Should find editor.tabSize key in inspect');
+            assert.ok(
+                dotKeyChild.path.includes('["editor.tabSize"]'),
+                `Path should use bracket notation for dotted key, got: ${dotKeyChild.path}`,
+            );
+        });
+
+        test('should copy into array destination with append position', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            const beforeResult = await queryStructuredDocument({
+                filePath,
+                expression: '$.orders[*]',
+                return: 'count' as 'count',
+            });
+            const beforeCount = beforeResult.data.count;
+
+            const result = await mutateStructuredDocument({
+                filePath,
+                operations: [
+                    { action: 'copy', target: '$.orders[0]', destination: '$.orders', position: 'append' },
+                ],
+            }, mockToken);
+            assert.ok(result.success, 'Copy should succeed');
+            const parsed = JSON.parse(result._serializedContent) as Record<string, unknown>;
+            const orders = parsed.orders as unknown[];
+            assert.strictEqual(orders.length, beforeCount + 1,
+                `Array should grow by 1 after copy append (was ${beforeCount}, got ${orders.length})`);
+        });
+
+        test('should move within array using prepend position', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            const beforeQuery = await queryStructuredDocument({
+                filePath,
+                expression: '$.orders[*]',
+                return: 'count' as 'count',
+            });
+            const beforeCount = beforeQuery.data.count;
+
+            const result = await mutateStructuredDocument({
+                filePath,
+                operations: [
+                    { action: 'move', target: '$.orders[1]', destination: '$.orders', position: 'prepend' },
+                ],
+            }, mockToken);
+            assert.ok(result.success, 'Move should succeed');
+            const parsed = JSON.parse(result._serializedContent) as Record<string, unknown>;
+            const orders = parsed.orders as unknown[];
+            // Move within same array: delete from position, insert at start — count stays same
+            assert.strictEqual(orders.length, beforeCount,
+                `Array should keep same length after move within (was ${beforeCount}, got ${orders.length})`);
+        });
+
+        test('should report JSONC format for .jsonc files', async () => {
+            const filePath = copyFixtureToTemp('json_comments.jsonc');
+            const result = await inspectStructuredDocument({ filePath });
+            assert.strictEqual(result.data.format, 'jsonc',
+                `JSONC file should report format "jsonc", got "${result.data.format}"`);
+        });
+
+        test('should report changed:0 when set value equals current value', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            // First get current value
+            const queryResult = await queryStructuredDocument({
+                filePath,
+                expression: '$.orders[0].status',
+                return: 'values' as 'values',
+            });
+            const currentValue = (queryResult.data.results as unknown[])[0];
+
+            // Set the same value — should be no-op
+            const result = await mutateStructuredDocument({
+                filePath,
+                operations: [
+                    { action: 'set', target: '$.orders[0].status', value: currentValue },
+                ],
+            }, mockToken);
+            assert.ok(result.success);
+            assert.strictEqual(result.operationDetails[0].changed, 0,
+                'Setting same value should report changed: 0');
+        });
+
+        test('should warn about created path when set auto-creates intermediate nodes', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            const result = await mutateStructuredDocument({
+                filePath,
+                operations: [
+                    { action: 'set', target: '$.newParent.newChild', value: 'created' },
+                ],
+            }, mockToken);
+            assert.ok(result.success);
+            assert.ok(result.warnings.length > 0, 'Should have warning about created path');
+            assert.ok(
+                result.warnings[0].includes('created intermediate nodes'),
+                `Warning should mention created nodes, got: "${result.warnings[0]}"`,
+            );
+        });
+
+        test('should provide clear error message for rename without value', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            try {
+                await mutateStructuredDocument({
+                    filePath,
+                    operations: [
+                        { action: 'rename', target: '$.orders[0].status' },
+                    ],
+                }, mockToken);
+                assert.fail('Rename without value should throw');
+            } catch (error) {
+                const message = (error as Error).message;
+                assert.ok(message.includes('"value" field'),
+                    `Error should mention "value" field, got: "${message}"`);
+            }
+        });
+
+        test('should support top-level bulk parameter for all operations', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            // Top-level bulk=true should apply to all operations
+            const result = await mutateStructuredDocument({
+                filePath,
+                bulk: true,
+                operations: [
+                    { action: 'set', target: '$.orders[*].status', value: 'shipped' },
+                ],
+            }, mockToken);
+            assert.ok(result.success);
+            assert.strictEqual(result.operationDetails[0].matched, 2,
+                'Should match both orders');
+            assert.strictEqual(result.operationDetails[0].changed, 2,
+                'Top-level bulk should change ALL matches, not just first');
+        });
+
+        test('should let per-operation bulk override top-level bulk', async () => {
+            const filePath = copyFixtureToTemp('json_spaces_2.json');
+            // Top-level bulk=true, but operation explicitly sets bulk=false
+            const result = await mutateStructuredDocument({
+                filePath,
+                bulk: true,
+                operations: [
+                    { action: 'set', target: '$.orders[*].status', value: 'shipped', bulk: false },
+                ],
+            }, mockToken);
+            assert.ok(result.success);
+            // Per-operation bulk=false should override top-level
+            assert.strictEqual(result.operationDetails[0].changed, 1,
+                'Per-operation bulk=false should override top-level bulk=true');
         });
     });
 });

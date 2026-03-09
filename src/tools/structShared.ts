@@ -1,4 +1,4 @@
-export { applyStructuredWorkspaceEdit, buildXPath, IJsonQueryMatch, IMutationSummary, IResolvedFile, IXmlQueryMatch, schemaTypeLabel } from './struct/common';
+export { buildXPath, computeEditInstructions, type EditInstruction, IJsonQueryMatch, IMutationSummary, IResolvedFile, IXmlQueryMatch, schemaTypeLabel } from './struct/common';
 export { analyzeJsonLikeDiagnostics } from './struct/diagnostics';
 export {
     detectJsonFlavor,
@@ -15,7 +15,7 @@ export {
     queryStructuredDocument,
     queryXml
 } from './struct/inspectQuery';
-export { mutateStructuredDocument } from './struct/mutate';
+export { type IMutateResult, mutateStructuredDocument } from './struct/mutate';
 export { diffStructuredDocuments, validateStructuredDocument } from './struct/validateDiff';
 export {
     createDiffUsage,

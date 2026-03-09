@@ -12,27 +12,43 @@ import {
     IJsonQueryMatch,
     IResolvedFile,
     IXmlQueryMatch,
+    isJsonLikeFormat,
+    isPlainObject,
     isSingleLineContent,
     normalizeJsonPath,
     serializeXmlNodeValue
 } from './common';
 import { parseJsonDocumentWithFlavor, parseXmlDocument, resolveAndReadStructuredFile } from './file';
 import { detectJsonIndent } from './formatting';
+import { getValueAtPath, parseSimpleJsonPath } from './jsonPath';
 
 export async function inspectStructuredDocument(input: IStructInspectParameters) {
     const file = await resolveAndReadStructuredFile(input.filePath);
     const depth = input.depth ?? 3;
 
-    if (file.format === 'json') {
+    if (isJsonLikeFormat(file.format)) {
         const document = parseJsonDocumentWithFlavor(file.content, file.jsonFlavor);
-        const structure = inspectJsonNode(document, 'root', '$', depth, 0);
         const indent = detectJsonIndent(file.content);
+
+        let target = document;
+        let basePath = '$';
+        if (input.path) {
+            const matches = queryJson(document, input.path);
+            if (matches.length === 0) {
+                throw new Error(`Path not found: ${input.path}`);
+            }
+            target = matches[0].value;
+            basePath = matches[0].path;
+        }
+
+        const structure = inspectJsonNode(target, basePath === '$' ? 'root' : basePath.split('.').pop() ?? 'root', basePath, depth, 0);
 
         return {
             ...file,
             data: {
                 format: file.format,
                 filePath: file.originalPath,
+                ...(input.path ? { path: input.path } : {}),
                 depth,
                 formatting: {
                     hasBom: file.hasBom,
@@ -52,6 +68,19 @@ export async function inspectStructuredDocument(input: IStructInspectParameters)
         throw new Error('XML document does not have a document element.');
     }
 
+    let targetElement: Element = root;
+    if (input.path) {
+        const matches = queryXml(document, input.path, input.namespaces);
+        if (matches.length === 0) {
+            throw new Error(`Path not found: ${input.path}`);
+        }
+        const node = matches[0].node;
+        if (node.nodeType !== node.ELEMENT_NODE) {
+            throw new Error(`Path "${input.path}" does not resolve to an XML element.`);
+        }
+        targetElement = node as unknown as Element;
+    }
+
     const xmlIndent = detectXmlIndent(file.content);
 
     return {
@@ -59,6 +88,7 @@ export async function inspectStructuredDocument(input: IStructInspectParameters)
         data: {
             format: file.format,
             filePath: file.originalPath,
+            ...(input.path ? { path: input.path } : {}),
             depth,
             formatting: {
                 hasBom: file.hasBom,
@@ -66,7 +96,7 @@ export async function inspectStructuredDocument(input: IStructInspectParameters)
                 indent: xmlIndent,
                 trailingNewline: file.trailingNewline,
             },
-            structure: inspectXmlElement(root, depth, 0),
+            structure: inspectXmlElement(targetElement, depth, 0),
             diagnostics: []
         }
     };
@@ -77,7 +107,7 @@ export async function queryStructuredDocument(input: IStructQueryParameters) {
     const returnMode = input.return ?? 'values';
     const limit = input.limit ?? 50;
 
-    if (file.format === 'json') {
+    if (isJsonLikeFormat(file.format)) {
         const document = parseJsonDocumentWithFlavor(file.content, file.jsonFlavor);
         const matches = queryJson(document, input.expression);
 
@@ -100,9 +130,27 @@ export function queryJson(document: unknown, expression: string): IJsonQueryMatc
         throw new Error(`Invalid JSONPath expression: "${expression}". JSONPath expressions must start with "$".`);
     }
 
+    // Fix @-prefixed keys in dot notation: $.@key → $["@key"]
+    const fixedExpression = expression.replace(/\.(@[^.[]*)/g, '["$1"]');
+
+    // jsonpath-plus cannot handle @-prefixed keys (even in bracket notation)
+    // because @ is interpreted as the filter current-node operator.
+    // For simple path expressions containing @-prefix keys, use manual traversal.
+    if (containsAtPrefixKey(fixedExpression)) {
+        const segments = parseSimpleJsonPath(fixedExpression);
+        if (segments) {
+            return queryJsonBySegments(document, segments, fixedExpression);
+        }
+        // Complex expression with @-prefix — cannot be handled
+        throw new Error(
+            `JSONPath expressions with @-prefixed keys are only supported for simple path access ` +
+            `(e.g., $["@add"], $["@@locale"]). Filters and recursive descent on @-prefix keys are not supported.`
+        );
+    }
+
     const jsonInput = document as null | boolean | number | string | object | unknown[];
     const results = JSONPath({
-        path: expression,
+        path: fixedExpression,
         json: jsonInput,
         wrap: true,
         resultType: 'all'
@@ -121,6 +169,61 @@ export function queryJson(document: unknown, expression: string): IJsonQueryMatc
         parent: result.parent,
         parentProperty: normalizeParentProperty(result.parent, result.parentProperty)
     }));
+}
+
+function containsAtPrefixKey(expression: string): boolean {
+    // Check for @-prefix inside bracket notation: ["@..."] or ['@...']
+    if (/\[['"]@/.test(expression)) {
+        return true;
+    }
+    // Check for @-prefix in dot notation: $.@ (should have been converted already)
+    if (/\.\@/.test(expression)) {
+        return true;
+    }
+    return false;
+}
+
+function queryJsonBySegments(
+    document: unknown,
+    segments: Array<string | number>,
+    expression: string,
+): IJsonQueryMatch[] {
+    const value = getValueAtPath(document, segments);
+    if (value === undefined) {
+        return [];
+    }
+
+    const pathStr = '$' + segments.map(seg =>
+        typeof seg === 'number' ? `[${seg}]` : needsBracketNotation(seg) ? `["${seg}"]` : `.${seg}`,
+    ).join('');
+
+    const parent = segments.length > 0
+        ? getValueAtPath(document, segments.slice(0, -1))
+        : undefined;
+    const parentProperty = segments.length > 0
+        ? segments[segments.length - 1]
+        : null;
+
+    return [{
+        path: pathStr,
+        pointer: '/' + segments.map(seg =>
+            typeof seg === 'number' ? String(seg) : seg.replace(/~/g, '~0').replace(/\//g, '~1'),
+        ).join('/'),
+        value,
+        parent: parent ?? document,
+        parentProperty: parentProperty ?? null,
+    }];
+}
+
+function needsBracketNotation(key: string): boolean {
+    return /[@.\[\]\s\-]/.test(key) || !/^[A-Za-z_$][\w$]*$/.test(key);
+}
+
+function jsonKeyToPathSegment(key: string): string {
+    if (needsBracketNotation(key)) {
+        return `["${key}"]`;
+    }
+    return `.${key}`;
 }
 
 export function queryXml(document: Document, expression: string, namespaces?: Record<string, string>): IXmlQueryMatch[] {
@@ -170,7 +273,7 @@ function inspectJsonNode(value: unknown, name: string, currentPath: string, maxD
             keyCount: entries.length,
             children: depth >= maxDepth
                 ? []
-                : entries.map(([key, child]) => inspectJsonNode(child, key, `${currentPath}.${key}`, maxDepth, depth + 1))
+                : entries.map(([key, child]) => inspectJsonNode(child, key, `${currentPath}${jsonKeyToPathSegment(key)}`, maxDepth, depth + 1))
         };
     }
 
