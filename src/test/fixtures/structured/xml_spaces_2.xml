@@ -1,0 +1,8 @@
+<orders>
+  <order id="1" status="pending">
+    <item sku="A-1">Widget</item>
+  </order>
+  <order id="2" status="done">
+    <item sku="B-2">Cable</item>
+  </order>
+</orders>

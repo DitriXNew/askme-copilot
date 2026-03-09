@@ -144,3 +144,76 @@ export interface IQuestionnaireResult {
     /** Attachments */
     attachments?: IAttachment[];
 }
+
+export type StructFileFormat = 'json' | 'xml';
+export type StructQueryLanguage = 'jsonpath' | 'xpath';
+export type StructQueryReturnMode = 'values' | 'paths' | 'count' | 'paths+values';
+export type StructSchemaType = 'json_schema' | 'xsd' | 'dtd' | 'relaxng';
+export type StructDiagnosticKind = 'duplicate-key' | 'unsafe-integer' | 'unicode-escape-risk';
+export type StructMutationAction =
+    | 'set'
+    | 'insert'
+    | 'delete'
+    | 'rename'
+    | 'move'
+    | 'copy'
+    | 'set_attribute'
+    | 'delete_attribute';
+
+export interface IStructInspectParameters {
+    filePath: string;
+    depth?: number;
+}
+
+export interface IStructQueryParameters {
+    filePath: string;
+    expression: string;
+    language?: StructQueryLanguage;
+    namespaces?: Record<string, string>;
+    limit?: number;
+    return?: StructQueryReturnMode;
+}
+
+export interface IStructMutateOperation {
+    action: StructMutationAction;
+    target: string;
+    value?: unknown;
+    position?: string;
+    bulk?: boolean;
+    namespaces?: Record<string, string>;
+    destination?: string;
+    attribute?: string;
+}
+
+export interface IStructMutateParameters {
+    filePath: string;
+    operations: IStructMutateOperation[];
+    writeBack?: boolean;
+    autoSave?: boolean;
+}
+
+export interface IStructValidateParameters {
+    filePath: string;
+    schema?: unknown;
+    schemaType?: StructSchemaType;
+}
+
+export interface IStructDiffParameters {
+    filePathBefore: string;
+    filePathAfter: string;
+    ignoreWhitespace?: boolean;
+}
+
+export interface IStructDiagnostic {
+    kind: StructDiagnosticKind;
+    severity: 'warning';
+    message: string;
+    path?: string;
+    offset?: number;
+    length?: number;
+    line?: number;
+    column?: number;
+    keyName?: string;
+    source?: 'key' | 'value';
+    valuePreview?: string;
+}

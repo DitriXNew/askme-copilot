@@ -20,7 +20,7 @@ Copilot's default behavior causes issues:
 
 ## The Solution
 
-This extension adds **7 tools** for Copilot to communicate with you:
+This extension adds **12 tools** for Copilot to communicate with you:
 
 | Tool | When Copilot Uses It |
 |------|---------------------|
@@ -31,6 +31,11 @@ This extension adds **7 tools** for Copilot to communicate with you:
 | 🖼️ **Read Image** | Analyze mockups, diagrams, icons in your project |
 | 📊 **Check Task Status** | Get messages from expert, respect pause, check if consultation needed |
 | 📋 **Questionnaire** | Multi-field forms for structured data collection |
+| 🧱 **Struct Inspect** | Inspect JSON/XML structure without reading raw text |
+| 🔎 **Struct Query** | Run JSONPath/XPath with paths, values, counts, namespaces |
+| 🛠️ **Struct Mutate** | Apply atomic structural edits to JSON/XML and return updated content |
+| ✅ **Struct Validate** | Validate well-formedness and JSON Schema after edits |
+| 🧮 **Struct Diff** | Compare two JSON/XML files semantically instead of line by line |
 
 ### 🧠 Ask Expert
 
@@ -110,6 +115,55 @@ Collect structured data via multi-field forms when Copilot needs multiple relate
       ]
     }
   ]
+}
+```
+
+### 🧱 Structural JSON/XML Tools
+
+These tools solve a recurring limitation of LLMs: raw string edits are fragile for JSON and XML.
+
+**What they add:**
+- **Structure inspection** before editing large documents
+- **Precise querying** with JSONPath or XPath instead of string search
+- **Atomic mutations** on one in-memory tree instead of many brittle replacements
+- **Validation** after edits
+- **Semantic diff** between before/after files
+
+**Available structural tools:**
+- **`struct_inspect`** - return the document skeleton with key names, array sizes, XML attributes, and namespaces
+- **`struct_query`** - return values, paths, counts, or both using JSONPath/XPath
+- **`struct_mutate`** - apply `set`, `insert`, `delete`, `rename`, `move`, `set_attribute`, `delete_attribute`
+- **`struct_validate`** - verify JSON/XML parsing and JSON Schema validation
+- **`struct_diff`** - return structural additions, removals, and changes by path
+
+**Example calls:**
+```typescript
+{
+  filePath: 'orders.json',
+  depth: 2
+}
+```
+
+```typescript
+{
+  filePath: 'orders.xml',
+  expression: '//ns:order[@status="pending"]',
+  namespaces: { ns: 'http://example.com/orders' },
+  return: 'paths+values'
+}
+```
+
+```typescript
+{
+  filePath: 'orders.json',
+  operations: [
+    {
+      action: 'set',
+      target: '$.orders[0].status',
+      value: 'shipped'
+    }
+  ],
+  writeBack: true
 }
 ```
 

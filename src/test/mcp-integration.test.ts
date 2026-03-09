@@ -27,7 +27,7 @@ suite('MCP Integration Tests', () => {
 		const languageModelTools = extension.packageJSON.contributes?.languageModelTools;
 		assert.ok(languageModelTools, 'Extension should define language model tools');
 		assert.ok(Array.isArray(languageModelTools), 'Language model tools should be an array');
-		assert.strictEqual(languageModelTools.length, 7, 'Should have 7 language model tools');
+		assert.strictEqual(languageModelTools.length, 12, 'Should have 12 language model tools');
 		
 		// Verify specific tools exist (using the actual 'name' field)
 		const toolNames = languageModelTools.map((tool: any) => tool.name);
@@ -38,6 +38,11 @@ suite('MCP Integration Tests', () => {
 		assert.ok(toolNames.includes('ask-me-copilot-tool_readImage'), 'Should include readImage tool');
 		assert.ok(toolNames.includes('ask-me-copilot-tool_checkTaskStatus'), 'Should include checkTaskStatus tool');
 		assert.ok(toolNames.includes('ask-me-copilot-tool_questionnaire'), 'Should include questionnaire tool');
+		assert.ok(toolNames.includes('ask-me-copilot-tool_structInspect'), 'Should include structInspect tool');
+		assert.ok(toolNames.includes('ask-me-copilot-tool_structQuery'), 'Should include structQuery tool');
+		assert.ok(toolNames.includes('ask-me-copilot-tool_structMutate'), 'Should include structMutate tool');
+		assert.ok(toolNames.includes('ask-me-copilot-tool_structValidate'), 'Should include structValidate tool');
+		assert.ok(toolNames.includes('ask-me-copilot-tool_structDiff'), 'Should include structDiff tool');
 	});
 
 	test('MCP tools should have valid schemas', () => {
@@ -128,6 +133,29 @@ suite('MCP Integration Tests', () => {
 		assert.ok(schema.properties.sections, 'questionnaire should have sections property');
 		assert.ok(schema.required.includes('title'), 'questionnaire should require title field');
 		assert.ok(schema.required.includes('sections'), 'questionnaire should require sections field');
+	});
+
+	test('structural tools should have correct schemas', () => {
+		const extension = vscode.extensions.getExtension('DitriX.ask-me-copilot-tool');
+		const languageModelTools = extension!.packageJSON.contributes?.languageModelTools;
+
+		const structInspectTool = languageModelTools.find((tool: any) => tool.name === 'ask-me-copilot-tool_structInspect');
+		const structQueryTool = languageModelTools.find((tool: any) => tool.name === 'ask-me-copilot-tool_structQuery');
+		const structMutateTool = languageModelTools.find((tool: any) => tool.name === 'ask-me-copilot-tool_structMutate');
+		const structValidateTool = languageModelTools.find((tool: any) => tool.name === 'ask-me-copilot-tool_structValidate');
+		const structDiffTool = languageModelTools.find((tool: any) => tool.name === 'ask-me-copilot-tool_structDiff');
+
+		assert.ok(structInspectTool, 'structInspect tool should exist');
+		assert.ok(structQueryTool, 'structQuery tool should exist');
+		assert.ok(structMutateTool, 'structMutate tool should exist');
+		assert.ok(structValidateTool, 'structValidate tool should exist');
+		assert.ok(structDiffTool, 'structDiff tool should exist');
+
+		assert.ok(structInspectTool.inputSchema.properties.filePath, 'structInspect should have filePath');
+		assert.ok(structQueryTool.inputSchema.properties.expression, 'structQuery should have expression');
+		assert.ok(structMutateTool.inputSchema.properties.operations, 'structMutate should have operations');
+		assert.ok(structValidateTool.inputSchema.properties.schemaType, 'structValidate should have schemaType');
+		assert.ok(structDiffTool.inputSchema.properties.filePathBefore, 'structDiff should have filePathBefore');
 	});
 
 	test('VS Code API should be available for UI testing', () => {

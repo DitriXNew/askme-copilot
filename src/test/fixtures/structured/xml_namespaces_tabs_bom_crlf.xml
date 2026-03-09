@@ -1,0 +1,11 @@
+﻿<catalog xmlns="http://example.com/catalog" xmlns:inv="http://example.com/inventory" xmlns:meta="http://example.com/meta">
+	<item id="catalog-1">
+		<name>Catalog Widget</name>
+	</item>
+	<inv:item inv:id="inventory-1">
+		<inv:name>Inventory Widget</inv:name>
+	</inv:item>
+	<meta:item meta:type="audit">
+		<meta:name>Audit Entry</meta:name>
+	</meta:item>
+</catalog>
