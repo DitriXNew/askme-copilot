@@ -183,6 +183,11 @@ export function loadInlineOrFileSchema(schema: unknown): unknown {
             ? path.join(workspaceFolder, schema)
             : schema;
 
+    // Restrict schema file loading to workspace boundaries
+    if (workspaceFolder && !path.resolve(absolutePath).startsWith(path.resolve(workspaceFolder))) {
+        throw new Error('Schema file path must be within the workspace folder.');
+    }
+
     if (fs.existsSync(absolutePath)) {
         const content = fs.readFileSync(absolutePath, 'utf8');
         return JSON.parse(content);

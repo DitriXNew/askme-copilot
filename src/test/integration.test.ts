@@ -909,62 +909,63 @@ function simulateQuestionnaireWithResult(input: any, result: {
     return { success: true, output };
 }
 
-    function simulateStructInspect(input: any): { success: boolean; output?: string } {
-        const validationError = validateInput(input, ['filePath']);
-        if (validationError) {
-            return {
-                success: false,
-                output: `❌ Error: ${validationError}\n\nHow to call struct_inspect:\nstruct_inspect({ filePath: "data/orders.json", depth: 2 })`
-            };
-        }
-
-        return { success: true, output: 'Inspected orders.json as json.' };
+function simulateStructInspect(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_inspect:\nstruct_inspect({ filePath: "data/orders.json", depth: 2 })`
+        };
     }
 
-    function simulateStructQuery(input: any): { success: boolean; output?: string } {
-        const validationError = validateInput(input, ['filePath', 'expression']);
-        if (validationError) {
-            return {
-                success: false,
-                output: `❌ Error: ${validationError}\n\nHow to call struct_query:\nstruct_query({ filePath: "data/orders.xml", expression: "//ns:order", return: "paths" })`
-            };
-        }
+    return { success: true, output: 'Inspected orders.json as json.' };
+}
 
-        return { success: true, output: 'Query matched 3 node(s) in orders.json.' };
+function simulateStructQuery(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath', 'expression']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_query:\nstruct_query({ filePath: "data/orders.xml", expression: "//ns:order", return: "paths" })`
+        };
     }
 
-    function simulateStructMutate(input: any): { success: boolean; output?: string } {
-        const validationError = validateInput(input, ['filePath', 'operations']);
-        if (validationError) {
-            return {
-                success: false,
-                output: `❌ Error: ${validationError}\n\nHow to call struct_mutate:\nstruct_mutate({ filePath: "data/orders.json", operations: [{ action: "set", target: "$.orders[0].status", value: "shipped" }] })`
-            };
-        }
+    return { success: true, output: 'Query matched 3 node(s) in orders.json.' };
+}
 
-        return { success: true, output: 'Updated 1 node(s) across 1 operation(s).' };
+function simulateStructMutate(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath', 'operations']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_mutate:\nstruct_mutate({ filePath: "data/orders.json", operations: [{ action: "set", target: "$.orders[0].status", value: "shipped" }] })`
+        };
     }
 
-    function simulateStructValidate(input: any): { success: boolean; output?: string } {
-        const validationError = validateInput(input, ['filePath']);
-        if (validationError) {
-            return {
-                success: false,
-                output: `❌ Error: ${validationError}\n\nHow to call struct_validate:\nstruct_validate({ filePath: "data/orders.json", schemaType: "json_schema" })`
-            };
-        }
+    return { success: true, output: 'Updated 1 node(s) across 1 operation(s).' };
+}
 
-        return { success: true, output: '{"valid":true,"errors":[]}' };
+function simulateStructValidate(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_validate:\nstruct_validate({ filePath: "data/orders.json", schemaType: "json_schema" })`
+        };
     }
 
-    function simulateStructDiff(input: any): { success: boolean; output?: string } {
-        const validationError = validateInput(input, ['filePathBefore', 'filePathAfter']);
-        if (validationError) {
-            return {
-                success: false,
-                output: `❌ Error: ${validationError}\n\nHow to call struct_diff:\nstruct_diff({ filePathBefore: "before.json", filePathAfter: "after.json" })`
-            };
-        }
+    return { success: true, output: '{"valid":true,"errors":[]}' };
+}
 
-        return { success: true, output: 'Computed 2 structural change(s).' };
+function simulateStructDiff(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePathBefore', 'filePathAfter']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_diff:\nstruct_diff({ filePathBefore: "before.json", filePathAfter: "after.json" })`
+        };
     }
+
+    return { success: true, output: 'Computed 2 structural change(s).' };
+
+}
