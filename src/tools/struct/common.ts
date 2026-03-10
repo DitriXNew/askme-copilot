@@ -168,7 +168,29 @@ export function isJsonLikeFormat(format: string): boolean {
 }
 
 export function deepEqual(left: unknown, right: unknown): boolean {
-    return JSON.stringify(left) === JSON.stringify(right);
+    if (left === right) {
+        return true;
+    }
+    if (left === null || right === null || typeof left !== typeof right) {
+        return false;
+    }
+    if (Array.isArray(left)) {
+        if (!Array.isArray(right) || left.length !== right.length) {
+            return false;
+        }
+        return left.every((item, index) => deepEqual(item, right[index]));
+    }
+    if (typeof left === 'object') {
+        const leftObj = left as Record<string, unknown>;
+        const rightObj = right as Record<string, unknown>;
+        const leftKeys = Object.keys(leftObj);
+        const rightKeys = Object.keys(rightObj);
+        if (leftKeys.length !== rightKeys.length) {
+            return false;
+        }
+        return leftKeys.every(key => key in rightObj && deepEqual(leftObj[key], rightObj[key]));
+    }
+    return false;
 }
 
 export function loadInlineOrFileSchema(schema: unknown): unknown {
@@ -191,6 +213,11 @@ export function loadInlineOrFileSchema(schema: unknown): unknown {
     if (fs.existsSync(absolutePath)) {
         const content = fs.readFileSync(absolutePath, 'utf8');
         return JSON.parse(content);
+    }
+
+    // Detect path-like strings and give a clear error instead of confusing JSON parse failure
+    if (schema.includes(path.sep) || schema.includes('/') || /\.(json|xsd|dtd|schema)$/i.test(schema)) {
+        throw new Error(`Schema file not found: "${schema}". Provide an existing file path or inline JSON schema string.`);
     }
 
     return JSON.parse(schema);

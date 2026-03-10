@@ -615,7 +615,7 @@
         "displayName": "🧱 Struct Inspect",
         "tags": ["json", "xml", "jsonc", "structured-data", "inspect", "askme-copilot"],
         "userDescription": "Inspect the skeleton of a JSON or XML file without reading it as raw text",
-        "modelDescription": "Reveals the structural skeleton of a JSON, JSONC, or XML document: nesting hierarchy, array sizes, attribute names, namespace declarations, and node types — all without returning raw text. Returns structured JSON data with depth-limited tree. Use BEFORE struct_query or struct_mutate to understand document shape. Supports open/unsaved documents. Use 'path' to inspect a subtree instead of the whole document (JSONPath for JSON/JSONC, XPath for XML). Output: { format, skeleton, stats }. Limitation: does not return node values — use struct_query for that.",
+        "modelDescription": "Reveals the structural skeleton of a JSON, JSONC, or XML document: nesting hierarchy, array sizes, attribute names, namespace declarations, and node types — all without returning raw text. Returns structured JSON data with depth-limited tree. Use BEFORE struct_query or struct_mutate to understand document shape. Supports open/unsaved documents. Use 'path' to inspect a subtree instead of the whole document (JSONPath for JSON/JSONC, XPath for XML). Output: { format, filePath, depth, formatting, structure, diagnostics }. Limitation: does not return node values — use struct_query for that.",
         "canBeReferencedInPrompt": true,
         "toolReferenceName": "struct_inspect",
         "icon": "$(symbol-structure)",

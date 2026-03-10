@@ -55,7 +55,7 @@ export abstract class BaseTool<T> implements vscode.LanguageModelTool<T> {
         example?: string
     ): vscode.LanguageModelToolResult {
         const lines = [
-            `❌ Error: ${message}`,
+            message,
             '',
             `How to call ${toolName}:`,
             usage

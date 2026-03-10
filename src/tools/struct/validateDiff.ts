@@ -77,7 +77,10 @@ export async function validateStructuredDocument(input: IStructValidateParameter
     const schemaType = input.schemaType;
 
     // BUG FIX: Report unsupported schemaType even when no schema is provided
-    if (schemaType && schemaType !== 'json_schema') {
+    if (schemaType) {
+        if (schemaType === 'json_schema') {
+            throw new Error('schemaType="json_schema" is not applicable to XML files. For XML validation, use schemaType="xsd", "dtd", or "relaxng" (not yet supported).');
+        }
         if (schemaType === 'xsd' || schemaType === 'dtd' || schemaType === 'relaxng') {
             throw new Error(`schemaType="${schemaType}" is not supported yet in this build. Current XML validation supports well-formedness checking only.\nExample: struct_validate({ filePath: "${file.originalPath}", schema: "schema.xsd", schemaType: "xsd" }) — will be supported in a future release.`);
         }
