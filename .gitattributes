@@ -1,0 +1,2 @@
+# Preserve exact line endings and BOM for CRLF/BOM test fixtures
+src/test/fixtures/structured/*_bom_crlf.* binary

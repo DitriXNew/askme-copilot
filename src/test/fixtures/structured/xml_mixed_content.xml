@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<article>
+  <p>text <b>bold</b> tail</p>
+  <p>before <i>italic</i> after</p>
+</article>

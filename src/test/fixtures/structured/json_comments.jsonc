@@ -1,0 +1,15 @@
+{
+  // Workspace-like configuration with comments and trailing commas
+  "editor.tabSize": 2,
+  "featureFlags": {
+    "xmlTools": true,
+    // This comment must survive JSONC mutation
+    "jsoncSupport": false,
+  },
+  "profiles": [
+    {
+      "name": "default",
+      "enabled": true,
+    },
+  ],
+}

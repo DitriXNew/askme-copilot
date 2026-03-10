@@ -20,7 +20,7 @@ Copilot's default behavior causes issues:
 
 ## The Solution
 
-This extension adds **7 tools** for Copilot to communicate with you:
+This extension adds **12 tools** for Copilot to communicate with you:
 
 | Tool | When Copilot Uses It |
 |------|---------------------|
@@ -31,42 +31,77 @@ This extension adds **7 tools** for Copilot to communicate with you:
 | 🖼️ **Read Image** | Analyze mockups, diagrams, icons in your project |
 | 📊 **Check Task Status** | Get messages from expert, respect pause, check if consultation needed |
 | 📋 **Questionnaire** | Multi-field forms for structured data collection |
+| 🧱 **Struct Inspect** | Inspect JSON/JSONC/XML structure without reading raw text |
+| 🔎 **Struct Query** | Run JSONPath/XPath with paths, values, counts, namespaces |
+| 🛠️ **Struct Mutate** | Compute atomic structural edits and return edit instructions for the LLM to apply |
+| ✅ **Struct Validate** | Validate well-formedness and JSON Schema after edits |
+| 🧮 **Struct Diff** | Compare two JSON/JSONC/XML files semantically instead of line by line |
 
 ### 🧠 Ask Expert
 
 Copilot asks you questions when uncertain:
 
+<details>
+<summary>Screenshot</summary>
+
 ![Ask Expert Dialog](docs/AskExpert.png)
+
+</details>
 
 ### 🎯 Select Options
 
 Choose from multiple options presented by Copilot:
 
+<details>
+<summary>Screenshot</summary>
+
 ![Select Options Dialog](docs/Selection.png)
+
+</details>
 
 ### ⚠️ Confirm Action
 
 Confirm dangerous operations before Copilot proceeds:
 
+<details>
+<summary>Screenshot</summary>
+
 ![Confirm Action Dialog](docs/Question.png)
+
+</details>
 
 ### 📝 Review Code
 
 Review and edit code suggested by Copilot:
 
+<details>
+<summary>Screenshot</summary>
+
 ![Code Review Dialog](docs/CodeReview.png)
+
+</details>
 
 ### 🖼️ Read Image
 
 Copilot analyzes images from your project with compression support:
 
+<details>
+<summary>Screenshot</summary>
+
 ![Read Image Tool](docs/ImageReader.png)
+
+</details>
 
 ### 📋 Questionnaire (v1.8.0)
 
 Collect structured data via multi-field forms when Copilot needs multiple related pieces of information:
 
+<details>
+<summary>Screenshot</summary>
+
 ![Questionnaire Form](docs/Form.png)
+
+</details>
 
 **Field Types:**
 - **Text** - Single-line text input (project name, file path, etc.)
@@ -113,11 +148,80 @@ Collect structured data via multi-field forms when Copilot needs multiple relate
 }
 ```
 
+### 🧱 Structural JSON/JSONC/XML Tools
+
+These tools solve a recurring limitation of LLMs: raw string edits are fragile for JSON and XML.
+
+**Architecture:** The tools **never write to disk**. `struct_mutate` computes mutations on an in-memory tree and returns compact `editInstructions[]` — line-based edit operations (`line`, `oldText`, `newText`) that the LLM applies via its built-in file editing tools. This triggers VS Code's native inline diff UI with Keep/Undo buttons, giving you full control over every change.
+
+**Why this design?**
+- LLM sees exactly what changed (no hidden side effects)
+- VS Code diff UI lets you accept/reject edits individually
+- No risk of silent file corruption — human always reviews
+- Works with unsaved/modified buffers
+
+**Format support:**
+- **JSON** — standard JSON files
+- **JSONC** — JSON with Comments (VS Code settings, tsconfig, etc.) — comments and trailing commas are preserved through mutations
+- **XML** — with namespace support, mixed content, self-closing tags
+
+**Available structural tools:**
+
+| Tool | Purpose |
+|------|---------|
+| `struct_inspect` | Document skeleton: key names, types, array sizes, XML attributes, namespaces. Supports `path` parameter for subtree inspection |
+| `struct_query` | Query with JSONPath or XPath. Returns values, paths, counts, or both. Supports XML namespace prefixes |
+| `struct_mutate` | Compute `set`, `insert`, `delete`, `rename`, `move`, `copy`, `set_attribute`, `delete_attribute` — returns `editInstructions[]` |
+| `struct_validate` | Verify well-formedness + JSON Schema validation. Schema types: `json_schema`, `xsd`/`dtd`/`relaxng` (XML, planned) |
+| `struct_diff` | Semantic diff by path — additions, removals, changes. Cross-format: JSON ↔ JSONC files can be compared |
+
+**Key details:**
+- **@-prefix keys** (ARB/Flutter l10n files like `@@locale`, `@title`): fully supported. JSONPath queries use bracket notation `$["@@locale"]` — the tools bypass jsonpath-plus for these keys due to a parser limitation
+- **Bracket notation**: Keys with dots, spaces, or special characters get proper JSONPath bracket notation in `inspect` output (e.g., `$["editor.tabSize"]` instead of invalid `$.editor.tabSize`)
+- **Edit instructions grouping**: Consecutive changed lines are grouped into single edit instructions for efficiency
+
+**Example — inspect:**
+```typescript
+{
+  filePath: 'orders.json',
+  depth: 2
+}
+```
+
+**Example — query with namespaces:**
+```typescript
+{
+  filePath: 'orders.xml',
+  expression: '//ns:order[@status="pending"]',
+  namespaces: { ns: 'http://example.com/orders' },
+  return: 'paths+values'
+}
+```
+
+**Example — mutate (returns editInstructions, does NOT write to file):**
+```typescript
+{
+  filePath: 'orders.json',
+  operations: [
+    {
+      action: 'set',
+      target: '$.orders[0].status',
+      value: 'shipped'
+    }
+  ]
+}
+```
+
 ### 🤖 Focus Expert Panel Button (v1.8.4)
 
 A button in the editor title bar to quickly focus the active expert dialog:
 
+<details>
+<summary>Screenshot</summary>
+
 ![Pin Button in Editor](docs/pinned.png)
+
+</details>
 
 - **Appears only** when there's an active expert panel open
 - **One-click focus** - instantly switch to the expert dialog from any editor
@@ -127,9 +231,14 @@ A button in the editor title bar to quickly focus the active expert dialog:
 
 A **persistent panel** (next to Terminal) for real-time communication with Copilot:
 
+<details>
+<summary>Screenshots</summary>
+
 ![Expert Monitor Panel](docs/Expert%20Monitor.png)
 
 ![Expert Monitor with Pause](docs/Pause.png)
+
+</details>
 
 **Controls:**
 - **⏸️ Pause Toggle** - Blocks Copilot execution until you're ready. When active, Copilot will wait at the next `checkTaskStatus` call until you unpause

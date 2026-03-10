@@ -569,6 +569,76 @@ function authenticateUser(username: string, password: string): boolean {
             assert.ok(result.output?.includes('Additional notes here'));
         });
     });
+
+    suite('Structural Tools Simulation', () => {
+        test('should validate struct inspect input', () => {
+            const result = simulateToolCall({
+                toolName: 'ask-me-copilot-tool_structInspect',
+                input: {},
+                shouldSucceed: false
+            });
+
+            assert.ok(!result.success);
+            assert.ok(result.output?.includes('How to call struct_inspect'));
+        });
+
+        test('should simulate struct query success', () => {
+            const result = simulateToolCall({
+                toolName: 'ask-me-copilot-tool_structQuery',
+                input: {
+                    filePath: 'orders.json',
+                    expression: '$.orders[*]',
+                    return: 'count'
+                },
+                shouldSucceed: true
+            });
+
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('Query matched'));
+        });
+
+        test('should simulate struct mutate validation failure', () => {
+            const result = simulateToolCall({
+                toolName: 'ask-me-copilot-tool_structMutate',
+                input: {
+                    filePath: 'orders.json',
+                    operations: []
+                },
+                shouldSucceed: false
+            });
+
+            assert.ok(!result.success);
+            assert.ok(result.output?.includes('How to call struct_mutate'));
+        });
+
+        test('should simulate struct validate success', () => {
+            const result = simulateToolCall({
+                toolName: 'ask-me-copilot-tool_structValidate',
+                input: {
+                    filePath: 'orders.json',
+                    schemaType: 'json_schema'
+                },
+                shouldSucceed: true
+            });
+
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('valid'));
+        });
+
+        test('should simulate struct diff success', () => {
+            const result = simulateToolCall({
+                toolName: 'ask-me-copilot-tool_structDiff',
+                input: {
+                    filePathBefore: 'before.json',
+                    filePathAfter: 'after.json'
+                },
+                shouldSucceed: true
+            });
+
+            assert.ok(result.success);
+            assert.ok(result.output?.includes('structural change'));
+        });
+    });
 });
 
 /**
@@ -594,6 +664,16 @@ function simulateToolCall(testCase: MockToolCall): { success: boolean; output?: 
                 });
             case 'ask-me-copilot-tool_questionnaire':
                 return simulateQuestionnaire(testCase.input);
+            case 'ask-me-copilot-tool_structInspect':
+                return simulateStructInspect(testCase.input);
+            case 'ask-me-copilot-tool_structQuery':
+                return simulateStructQuery(testCase.input);
+            case 'ask-me-copilot-tool_structMutate':
+                return simulateStructMutate(testCase.input);
+            case 'ask-me-copilot-tool_structValidate':
+                return simulateStructValidate(testCase.input);
+            case 'ask-me-copilot-tool_structDiff':
+                return simulateStructDiff(testCase.input);
             default:
                 return { success: false, error: 'Unknown tool' };
         }
@@ -827,4 +907,65 @@ function simulateQuestionnaireWithResult(input: any, result: {
     }
     
     return { success: true, output };
+}
+
+function simulateStructInspect(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_inspect:\nstruct_inspect({ filePath: "data/orders.json", depth: 2 })`
+        };
+    }
+
+    return { success: true, output: 'Inspected orders.json as json.' };
+}
+
+function simulateStructQuery(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath', 'expression']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_query:\nstruct_query({ filePath: "data/orders.xml", expression: "//ns:order", return: "paths" })`
+        };
+    }
+
+    return { success: true, output: 'Query matched 3 node(s) in orders.json.' };
+}
+
+function simulateStructMutate(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath', 'operations']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_mutate:\nstruct_mutate({ filePath: "data/orders.json", operations: [{ action: "set", target: "$.orders[0].status", value: "shipped" }] })`
+        };
+    }
+
+    return { success: true, output: 'Updated 1 node(s) across 1 operation(s).' };
+}
+
+function simulateStructValidate(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePath']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_validate:\nstruct_validate({ filePath: "data/orders.json", schemaType: "json_schema" })`
+        };
+    }
+
+    return { success: true, output: '{"valid":true,"errors":[]}' };
+}
+
+function simulateStructDiff(input: any): { success: boolean; output?: string } {
+    const validationError = validateInput(input, ['filePathBefore', 'filePathAfter']);
+    if (validationError) {
+        return {
+            success: false,
+            output: `❌ Error: ${validationError}\n\nHow to call struct_diff:\nstruct_diff({ filePathBefore: "before.json", filePathAfter: "after.json" })`
+        };
+    }
+
+    return { success: true, output: 'Computed 2 structural change(s).' };
+
 }

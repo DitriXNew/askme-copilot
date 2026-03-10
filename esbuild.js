@@ -12,6 +12,7 @@ const buildOptions = {
     platform: 'node',
     outfile: 'dist/extension.js',
     external: ['vscode'], // Only exclude vscode - it's provided by runtime
+    mainFields: ['module', 'main'], // Prefer ESM entry to avoid UMD/AMD dynamic require issues
     sourcemap: !production,
     minify: production,
     target: 'node18',

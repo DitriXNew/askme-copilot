@@ -609,6 +609,245 @@
             "sections"
           ]
         }
+      },
+      {
+        "name": "ask-me-copilot-tool_structInspect",
+        "displayName": "🧱 Struct Inspect",
+        "tags": ["json", "xml", "jsonc", "structured-data", "inspect", "askme-copilot"],
+        "userDescription": "Inspect the skeleton of a JSON or XML file without reading it as raw text",
+        "modelDescription": "Reveals the structural skeleton of a JSON, JSONC, or XML document: nesting hierarchy, array sizes, attribute names, namespace declarations, and node types — all without returning raw text. Returns structured JSON data with depth-limited tree. Use BEFORE struct_query or struct_mutate to understand document shape. Supports open/unsaved documents. Use 'path' to inspect a subtree instead of the whole document (JSONPath for JSON/JSONC, XPath for XML). Output: { format, filePath, depth, formatting, structure, diagnostics }. Limitation: does not return node values — use struct_query for that.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "struct_inspect",
+        "icon": "$(symbol-structure)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Path to a JSON or XML file, relative to the workspace root or absolute"
+            },
+            "depth": {
+              "type": "number",
+              "minimum": 0,
+              "description": "Optional maximum depth for the returned structure tree"
+            },
+            "path": {
+              "type": "string",
+              "description": "Optional JSONPath or XPath expression to inspect a subtree instead of the whole document. For JSON/JSONC use JSONPath (e.g. '$.store.books'), for XML use XPath (e.g. '//catalog/items')."
+            },
+            "namespaces": {
+              "type": "object",
+              "description": "Optional XML namespace map for XPath in 'path'. Example: { \"ns\": \"http://example.com\" }",
+              "additionalProperties": {
+                "type": "string"
+              }
+            }
+          },
+          "required": [
+            "filePath"
+          ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_structQuery",
+        "displayName": "🔎 Struct Query",
+        "tags": ["json", "xml", "jsonc", "structured-data", "query", "jsonpath", "xpath", "askme-copilot"],
+        "userDescription": "Query JSONPath or XPath against a JSON/XML file and return structured matches",
+        "modelDescription": "Executes JSONPath (for JSON/JSONC) or XPath (for XML) expressions against a structured document and returns matching nodes. Supports namespace maps for XML, result limiting, and four return modes: values, paths, count, or paths+values. Reads from open/unsaved document buffers. Use this instead of grep/string search when you need precise node addressing, bulk value extraction, or counting. Output: { matches[], count, expression }. Limitation: read-only — use struct_mutate to modify matched nodes.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "struct_query",
+        "icon": "$(search)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Path to a JSON or XML file"
+            },
+            "expression": {
+              "type": "string",
+              "description": "JSONPath or XPath expression to execute"
+            },
+            "language": {
+              "type": "string",
+              "enum": [
+                "jsonpath",
+                "xpath"
+              ],
+              "description": "Optional query language hint. Normally inferred from file format."
+            },
+            "namespaces": {
+              "type": "object",
+              "description": "Optional XML namespace map like { \"ns\": \"http://example.com\" }",
+              "additionalProperties": {
+                "type": "string"
+              }
+            },
+            "limit": {
+              "type": "number",
+              "minimum": 1,
+              "description": "Maximum number of matches to return in the result payload"
+            },
+            "return": {
+              "type": "string",
+              "enum": [
+                "values",
+                "paths",
+                "count",
+                "paths+values"
+              ],
+              "description": "Return values only, paths only, count only, or paths together with values"
+            }
+          },
+          "required": [
+            "filePath",
+            "expression"
+          ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_structMutate",
+        "displayName": "🛠️ Struct Mutate",
+        "tags": ["json", "xml", "jsonc", "structured-data", "mutate", "edit", "askme-copilot"],
+        "userDescription": "Apply structural edits to JSON/XML files. Returns edit instructions for review.",
+        "modelDescription": "Computes structural mutations on a JSON, JSONC, or XML file and returns compact line-based edit instructions. Does NOT write to disk. Each edit instruction specifies: the 1-based line number in the original file, the exact old text on that line (oldText), and the new text to replace it with (newText). Apply each instruction sequentially to the file using your file editing tools. For insertions, the instruction specifies 'insertAfter' with the anchor line. For deletions, the instruction specifies the line range to remove. The 'oldText' field is the exact current content — use it to verify the edit target before applying. Supports: JSON (JSONPath), JSONC with comments (JSONPath), XML with namespaces (XPath). Preserves formatting, indentation, line endings, BOM, JSONC comments, XML attribute quote style. Use struct_inspect first to understand file structure. Use struct_query to count matching nodes before bulk mutations. Output: { success, file, editInstructions[], summary, warnings[] }. Limitation: max 50 MB file size.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "struct_mutate",
+        "icon": "$(edit)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Path to a JSON or XML file"
+            },
+            "bulk": {
+              "type": "boolean",
+              "description": "When true, apply all operations to every matching target. Applies to all operations that don't have their own bulk flag. Default: false (only first match per operation)."
+            },
+            "operations": {
+              "type": "array",
+              "description": "List of sequential structural mutations to apply atomically on the in-memory tree. Operations execute in order — each operation sees the result of previous ones.",
+              "items": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "type": "string",
+                    "enum": [
+                      "set",
+                      "insert",
+                      "delete",
+                      "rename",
+                      "move",
+                      "copy",
+                      "set_attribute",
+                      "delete_attribute"
+                    ],
+                    "description": "Mutation action to perform"
+                  },
+                  "target": {
+                    "type": "string",
+                    "description": "JSONPath or XPath target expression"
+                  },
+                  "value": {
+                    "description": "New value, inserted node content, or new name depending on the action"
+                  },
+                  "position": {
+                    "type": "string",
+                    "description": "Optional insert/move position: before, after, prepend, append, or at:N"
+                  },
+                  "bulk": {
+                    "type": "boolean",
+                    "description": "When true, apply the action to all matching targets. Otherwise only the first match is changed."
+                  },
+                  "namespaces": {
+                    "type": "object",
+                    "description": "Optional XML namespace map",
+                    "additionalProperties": {
+                      "type": "string"
+                    }
+                  },
+                  "destination": {
+                    "type": "string",
+                    "description": "Destination JSONPath/XPath for move/copy actions"
+                  },
+                  "attribute": {
+                    "type": "string",
+                    "description": "Attribute name for set_attribute/delete_attribute"
+                  }
+                },
+                "required": [
+                  "action",
+                  "target"
+                ]
+              }
+            }
+          },
+          "required": [
+            "filePath",
+            "operations"
+          ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_structValidate",
+        "displayName": "✅ Struct Validate",
+        "tags": ["json", "xml", "jsonc", "structured-data", "validate", "schema", "askme-copilot"],
+        "userDescription": "Validate JSON/XML syntax and optionally validate against a schema",
+        "modelDescription": "Validates a JSON, JSONC, or XML document for well-formedness and optionally against a JSON Schema (for JSON/JSONC). Returns structured error list with paths, line numbers, and messages. Use AFTER struct_mutate to verify edits, or independently to check document health. Reads from open/unsaved buffers. Output: { valid: boolean, errors[], schemaType }. Limitation: XSD/DTD/RelaxNG schema validation is not yet implemented — only well-formedness checking is available for XML.",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "struct_validate",
+        "icon": "$(pass)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePath": {
+              "type": "string",
+              "description": "Path to a JSON or XML file"
+            },
+            "schema": {
+              "description": "Optional inline schema object/string or path to schema file"
+            },
+            "schemaType": {
+              "type": "string",
+              "description": "Validation schema type. Allowed values: json_schema (for JSON/JSONC), xsd, dtd, relaxng (XML, not yet supported). Note: use json_schema with underscore, not jsonschema."
+            }
+          },
+          "required": [
+            "filePath"
+          ]
+        }
+      },
+      {
+        "name": "ask-me-copilot-tool_structDiff",
+        "displayName": "🧮 Struct Diff",
+        "tags": ["json", "xml", "jsonc", "structured-data", "diff", "compare", "askme-copilot"],
+        "userDescription": "Compute a structural diff between two JSON/XML files",
+        "modelDescription": "Computes a semantic structural diff between two JSON, JSONC, or XML documents. Returns added, removed, and changed paths with old/new values — ignoring whitespace and formatting noise. Reads from open/unsaved buffers. Use this instead of text diff when you need to understand what structurally changed (e.g., after struct_mutate). Output: { changes[], changeCount, summary }. Supports ignoreWhitespace option for XML text nodes. Limitation: both files must be the same format (JSON↔JSON or XML↔XML).",
+        "canBeReferencedInPrompt": true,
+        "toolReferenceName": "struct_diff",
+        "icon": "$(diff)",
+        "inputSchema": {
+          "type": "object",
+          "properties": {
+            "filePathBefore": {
+              "type": "string",
+              "description": "Path to the original JSON/XML file"
+            },
+            "filePathAfter": {
+              "type": "string",
+              "description": "Path to the updated JSON/XML file"
+            },
+            "ignoreWhitespace": {
+              "type": "boolean",
+              "description": "When diffing XML, ignore whitespace-only text nodes"
+            }
+          },
+          "required": [
+            "filePathBefore",
+            "filePathAfter"
+          ]
+        }
       }
     ]
   },
@@ -669,6 +908,12 @@
     "typescript": "^5.9.3"
   },
   "dependencies": {
-    "jimp": "^1.6.0"
+    "@xmldom/xmldom": "^0.8.11",
+    "ajv": "^8.18.0",
+    "fast-xml-parser": "^5.4.2",
+    "jimp": "^1.6.0",
+    "jsonc-parser": "^3.3.1",
+    "jsonpath-plus": "^10.4.0",
+    "xpath": "^0.0.34"
   }
 }

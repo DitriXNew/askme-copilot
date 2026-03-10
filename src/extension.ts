@@ -9,7 +9,12 @@ import {
     ConfirmActionTool, 
     ReadImageTool,
     CheckTaskStatusTool,
-    QuestionnaireTool
+    QuestionnaireTool,
+    StructInspectTool,
+    StructQueryTool,
+    StructMutateTool,
+    StructValidateTool,
+    StructDiffTool
 } from './tools';
 import { ExpertMonitorViewProvider } from './views';
 
@@ -52,6 +57,11 @@ export function activate(context: vscode.ExtensionContext) {
     const readImageTool = new ReadImageTool(context);
     const checkTaskStatusTool = new CheckTaskStatusTool(context);
     const questionnaireTool = new QuestionnaireTool(context);
+    const structInspectTool = new StructInspectTool(context);
+    const structQueryTool = new StructQueryTool(context);
+    const structMutateTool = new StructMutateTool(context);
+    const structValidateTool = new StructValidateTool(context);
+    const structDiffTool = new StructDiffTool(context);
     
     context.subscriptions.push(
         vscode.lm.registerTool('ask-me-copilot-tool_askExpert', askExpertTool),
@@ -60,7 +70,12 @@ export function activate(context: vscode.ExtensionContext) {
         vscode.lm.registerTool('ask-me-copilot-tool_confirmAction', confirmActionTool),
         vscode.lm.registerTool('ask-me-copilot-tool_readImage', readImageTool),
         vscode.lm.registerTool('ask-me-copilot-tool_checkTaskStatus', checkTaskStatusTool),
-        vscode.lm.registerTool('ask-me-copilot-tool_questionnaire', questionnaireTool)
+        vscode.lm.registerTool('ask-me-copilot-tool_questionnaire', questionnaireTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_structInspect', structInspectTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_structQuery', structQueryTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_structMutate', structMutateTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_structValidate', structValidateTool),
+        vscode.lm.registerTool('ask-me-copilot-tool_structDiff', structDiffTool)
     );
     
     logger.info('✅ Registered all language model tools');
